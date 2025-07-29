@@ -19,8 +19,7 @@
 # Change the file extension to match the format (.xml for XML, etc...)
 #
 ###
-title: "TODO - Your title"
-abbrev: "TODO - Abbreviation"
+title: "Information Element for Flow Discard Classification"
 category: info
 
 docname: draft-todo-yourname-protocol-latest
