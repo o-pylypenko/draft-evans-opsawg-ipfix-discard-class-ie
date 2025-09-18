@@ -66,19 +66,15 @@ Table of Contents
    6.  References
      6.1.  Normative References
      6.2.  Informative References
-   Appendix A.  Correlating Flow Discards with Interface/Device
-           Discards
-     A.1.  Correlation Keys
-       A.1.1.  Device / Observation Domain
-       A.1.2.  Interface Context
-       A.1.3.  Time Alignment
-       A.1.4.  Discard Class
-     A.2.  Recommended Exporter Behaviour
-     A.3.  Correlating to Discardmodel Components
-       A.3.1.  Interface-level Correlation
-       A.3.2.  Device-level Correlation
-       A.3.3.  Control-plane Correlation
-     A.4.  Handling Expected Discrepancies
+   Appendix A.  Correlating Flow Discards with Interface/Device/
+           Control-Plane Discards
+     A.1.  Scope Alignment (What Must Match)
+     A.2.  Class and Reason Alignment
+     A.3.  Recommended Exporter Context
+     A.4.  Collector Workflow (General Pattern)
+     A.5.  Handling Expected Discrepancies
+     A.6.  Operational Example: Congestive Loss (no-buffer/class) and
+           Elephant Flows
    Authors' Addresses
 
 1.  Introduction
@@ -198,6 +194,11 @@ Table of Contents
        (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint)
        for filtering, correlation, or redundancy, but flowDiscardClass
        alone suffices to recover the discard classification.
+
+   5.  Specificity.  Exporters SHOULD report the most-specific known
+       class for a discard (i.e., a leaf).  Parent/aggregate codes MAY
+       be used when the exporter cannot determine a more specific leaf
+       for the event/interval.
 
 3.2.  flowDiscardClass Definition
 
@@ -331,18 +332,31 @@ Table of Contents
    discards so that a collector can recover the full classification from
    this IE alone, with the exception of traffic class.
 
-   Per-class congestive loss (no-buffer/class): When reporting no-
-   buffer/class, the specific traffic class (e.g., DSCP or L2 PCP)
-   SHOULD be carried in a companion IE (e.g., ipDiffServCodePoint,
-   ipClassOfService, or dot1qPriority) in the same record;
-   flowDiscardClass itself remains an identifier only, consistent with
-   [RFC7013] separation of condition vs. parameters.
+   Per-class congestive loss (no-buffer/class).  When reporting no-
+   buffer/class, the traffic-class used by the queueing system MUST be
+   present in the same record, carried in exactly one suitable IE: e.g.,
+   ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for
+   L2.  If classification occurs after remarking, exporters SHOULD use
+   the corresponding *post-*class IE where available (or include a
+   device queue-ID with an Options-exported mapping).
 
    Multiplicity: Exporters MUST NOT encode multiple discard reasons in a
    single instance of flowDiscardClass.  If multiple reasons apply,
    export multiple records (one per reason) or use IPFIX Structured Data
    (e.g., a basicList of flowDiscardClass values) per [RFC6313] and
    [RFC7013].
+
+   Cardinality.  A Flow Record MUST contain at most one flowDiscardClass
+   IE instance.  If multiple reasons apply within the same flow
+   interval, exporters SHOULD emit multiple records (one per reason) or
+   encode a list using IPFIX Structured Data (e.g., a basicList of
+   flowDiscardClass values).
+
+   Interval semantics.  When exported on an interval Flow Record,
+   flowDiscardClass indicates that at least one packet in the reported
+   interval matched the indicated class.  Exporters SHOULD include
+   droppedPacketDeltaCount/droppedOctetDeltaCount to quantify the
+   affected volume for that class.
 
 4.  Security Considerations
 
@@ -455,131 +469,248 @@ Table of Contents
               RFC 9710, DOI 10.17487/RFC9710, February 2025,
               <https://www.rfc-editor.org/rfc/rfc9710>.
 
-Appendix A.  Correlating Flow Discards with Interface/Device Discards
+Appendix A.  Correlating Flow Discards with Interface/Device/Control-
+             Plane Discards
 
-   This section gives non-normative guidance for correlating flow-level
-   discard reporting (this document) with interface and device discard
-   aggregates exported via [I-D.ietf-opsawg-discardmodel].  The goal is
-   to enable operators to correlate device and interface-level discard
-   classes with the specific flows being dropped.
+   *Objective.* Enable operators to understand *which flows are
+   impacted* when *interface*, *device*, or *control-plane* discard
+   counters rise in the discardmodel.  A typical workflow is:
 
-A.1.  Correlation Keys
+   1.  *Detect anomalous discards* on an interface/device/control-plane
+       (by class and direction) using the discardmodel; then
 
-   Collectors SHOULD correlate records along the following axes:
+   2.  *Query flow telemetry* to identify the *impacted* flows (and,
+       where applicable, the *causal* flows that contributed to the
+       condition).
 
-A.1.1.  Device / Observation Domain
+A.1.  Scope Alignment (What Must Match)
 
-   The observationDomainId (IPFIX message header) binds Flow Records to
-   the same Exporter/Observation Domain as the device-level or
-   interface-level counters.
+   Accurate correlation depends on joining records that describe the
+   *same exporter/vantage, component, interface (if applicable),
+   direction, class, and time window*:
 
-   The observationPointId (IE 138) can disambiguate between multiple
-   observation points on a device (e.g., line card/port pipeline).
-   Exporters MAY also include lineCardId (IE 141) and portId (IE 142) to
-   improve stability across interface renumbering.
+   *  *Exporter & vantage.* Join on the same Exporter/Observation Domain
+      (e.g., observationDomainId).  Where multiple taps or pipeline
+      stages exist, include observationPointId (and, if available, line-
+      card/port identifiers) so flow data and counters represent
+      comparable points.
 
-A.1.2.  Interface Context
+   *  *Component & interface.*
 
-   Exporters SHOULD include ingressInterface (IE 10) and/or
-   egressInterface (IE 14) in Flow Records carrying discard information,
-   so that flow-level drops can be grouped to the same interface
-   hierarchy used by the discardmodel.  Note that values correspond to
-   ifIndex semantics and may be reassigned on reboot.
+      -  *Interface component:* include ingressInterface/egressInterface
+         in Flow Records and match the *same ifIndex* and direction as
+         the discardmodel counters.
 
-A.1.3.  Time Alignment
+      -  *Device component:* drop the interface key and aggregate across
+         interfaces for the same exporter/time/class.
 
-   When Flow Records represent an interval, use IPFIX time IEs to align
-   with the window of the discardmodel counters:
+      -  *Control-plane component:* no interface key; match by
+         exporter/time/class (and any control-plane class identifiers
+         available).
 
-   *  flowStart/flowEnd timestamps (e.g., millisecond-precision
-      variants) and/or
+   *  *Time.* Align Flow intervals (flowStart/flowEnd, or an
+      observation-time IE) with the sampling/roll-up interval of the
+      discardmodel counters.  In practice, bucket both datasets (e.g.,
+      1-minute buckets) and allow small skew to cover clock/polling
+      jitter.
 
-   *  observationTime{Seconds,Milliseconds,Microseconds,Nanoseconds} for
-      event-style exports
+A.2.  Class and Reason Alignment
 
-   Collectors SHOULD perform windowed joins (e.g., within the Flow's
-   start/end bounds) when aggregating flows to interface/device
-   counters.
+   *  *Discard class.* flowDiscardClass mirrors the discardmodel
+      hierarchy (parents + leaves).  Select the value(s) that match the
+      anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/
+      class, etc.).
 
-A.1.4.  Discard Class
+   *  *Traffic class identity (when relevant).* For no-buffer/class,
+      Exporters *SHOULD* also export the traffic-class identifier used
+      by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or
+      dot1qPriority for L2).  If the device uses internal queue IDs,
+      provide a mapping (via Options data or out-of-band config) so
+      collectors can align Flow Records with per-class counters.
 
-   This draft's flowDiscardClass values index the leaf and aggregate
-   classes defined by the discardmodel, including L2 and L3 aggregates.
-   Correlation is therefore a direct match on the class identifier.
+A.3.  Recommended Exporter Context
 
-A.2.  Recommended Exporter Behaviour
+   When exporting Flow Records that carry flowDiscardClass, Exporters
+   *SHOULD* include:
 
-   To facilitate accurate correlation, an Exporter that sets
-   flowDiscardClass for a Flow Record:
+   *  *Context:* ingressInterface/egressInterface, observationPointId
+      (if applicable), time bounds (flowStart/flowEnd or an observation-
+      time IE), and the relevant class IE
+      (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).
 
-   *  SHOULD also export ingressInterface/egressInterface and
-      observationPointId in the same record/template.
+   *  *Quantification:* droppedPacketDeltaCount and/or
+      droppedOctetDeltaCount, so per-class dropped volume from flows can
+      be compared to discardmodel aggregates.
 
-   *  SHOULD export time bounds (flowStart/flowEnd) or an
-      observationTime* timestamp appropriate to the reporting model.
+   *  *Multiplicity handling:* if multiple discard reasons apply to the
+      same flow interval, either export *one record per reason* or use
+      IPFIX Structured Data to encode multiple flowDiscardClass values.
 
-   *  SHOULD include counters that quantify the drop, such as
-      droppedOctetDeltaCount (IE 132) and droppedPacketDeltaCount (IE
-      133), when available, alongside this draft's class indicator, so
-      that the per-class volume can be rolled up to the interface/device
-      aggregates.  (For L2 counters, the corresponding IEs such as
-      droppedLayer2OctetDeltaCount (IE 424) apply.)
+A.4.  Collector Workflow (General Pattern)
 
-   *  MAY include lineCardId/portId when interface renumbering is common
-      in the deployment.
+   Given an anomaly in the discardmodel (per interface/device/control-
+   plane, direction, class, and time):
 
-   These recommendations follow [RFC7013] guidance to keep identifiers
-   and semantics precise, avoid ambiguity about scope, and provide
-   sufficient context to interpret counters correctly.
+   1.  *Select the time bucket(s)* and affected key(s): exporter,
+       component (and interface if applicable), direction, discard
+       *class*.
 
-A.3.  Correlating to Discardmodel Components
+   2.  *Find impacted flows:* filter Flow Records that overlap the
+       bucket(s) and match the exporter/component keys *and* either
 
-   The discardmodel organizes counters under three components:
-   interface, device, and control-plane, with traffic and discards
-   subtrees, per direction and class.
+       *  explicitly report the same flowDiscardClass, *or*
 
-   A collector can:
+       *  (for aggregate classes) belong to the same traffic class and
+          vantage where the loss is counted.
 
-A.3.1.  Interface-level Correlation
+   3.  *Aggregate per flow* within the bucket(s): bytes/packets and, if
+       available, dropped-bytes/packets.
 
-   Group Flow Records by (observationDomainId, observationPointId?,
-   ingressInterface/egressInterface, flowDiscardClass) over the chosen
-   time window and sum dropped-packet/byte deltas.  Compare to the
-   discardmodel's per-interface, per-direction, per-class counters in
-   the corresponding time bucket.
+   4.  *Rank or group* flows as needed:
 
-A.3.2.  Device-level Correlation
+       *  *Impacted analysis:* which flows suffered loss (by dropped-
+          octets/packets, or by presence of the discard class)?
 
-   Repeat the above grouping without the interface keys (sum over all
-   interfaces), and compare to device-level aggregates in the
-   discardmodel.
+       *  *Causal analysis (when meaningful):* which flows likely
+          contributed to the interface/device condition (e.g., top
+          senders in the same class and egress interface during a no-
+          buffer/class spike)?
 
-A.3.3.  Control-plane Correlation
+   5.  *Validate:* compare summed flow-level dropped deltas (if
+       exported) to the discardmodel deltas for that bucket.  Small gaps
+       are expected (sampling, timing, vantage); large gaps suggest
+       vantage mismatch or incomplete class mapping.
 
-   Where applicable, correlate Flow Records whose flowDiscardClass
-   indicates control-plane policy/actions with the discardmodel's
-   control-plane subtree.  (Exporters may additionally use forwarding
-   status IEs when relevant; see [RFC9710] updates to the IPFIX
-   registry.)
+A.5.  Handling Expected Discrepancies
 
-A.4.  Handling Expected Discrepancies
+   *  *Vantage mismatch.* Flow telemetry captured *before* queueing/
+      policing but counters tallied *after* will skew attribution.  Use
+      observationPointId (and device documentation) to align vantage.
 
-   Differences between summed flow-level drops and interface/device
-   aggregates are expected when:
+   *  *Class remapping.* If DSCP is remarked, use *post-*class IEs or
+      queue-ID mappings so class identity matches where the drop is
+      counted.
 
-   *  Different observation points (e.g., pre- vs post-feature stages)
-      are used; observationPointId and observationPointType can explain
-      such gaps.
+   *  *Sampling/filtering.* Flow sampling reduces visibility of small
+      flows and biases shares; where possible, rely on flow-level
+      dropped-octet counters, or increase the bucket size to stabilize
+      estimates.
 
-   *  Sampling or filtering is applied to flows but not to device
-      counters.
+   *  *Clock skew.* Apply a small skew window (e.g., ±30 s) when joining
+      buckets across datasets.
 
-   *  Clock skew / windowing causes boundary effects; prefer aligning to
-      observationTime* if flows are very short.
+A.6.  Operational Example: Congestive Loss (no-buffer/class) and
+      Elephant Flows
 
-   Exporters SHOULD document (or export via Options) any sampling,
-   filtering, or pipeline placement that affects visibility, per
-   [RFC7011]/[RFC7012] operational guidance.
+   This example illustrates the workflow above for *congestive loss*
+   (no-buffer/class) on an egress interface.  It identifies *high-volume
+   (“elephant”) flows* most likely responsible for a spike by joining
+   per-class interface discards with per-class, per-interface flow
+   aggregates and ranking flows by bytes/rate.
+
+   *Assumed tables (adapt names as needed):*
+
+   *  flows(observation_domain_id, egress_ifindex, flow_start, flow_end,
+      octet_delta, packet_delta, ip_dscp, src_addr, dst_addr, src_port,
+      dst_port, protocol, flowdiscardclass)
+
+   *  interface_discards(observation_domain_id, ifindex, direction,
+      discard_class, class_id, ts, packet_delta, octet_delta)
+
+   *Note:* In Table 1, no-buffer/class has value *38*.
+
+   -- Identify elephant flows contributing to egress no-buffer/class drops
+   WITH params AS (
+     SELECT
+       38::smallint AS no_buffer_class,          -- flowDiscardClass for no-buffer/class (Table 1)
+       interval '1 minute' AS bucket,            -- analysis granularity
+       interval '30 seconds' AS skew,            -- clock/bucket tolerance
+       100000000::bigint AS elephant_bytes_min   -- 100 MB per bucket (example threshold)
+   ),
+
+   -- 1) Per-minute egress no-buffer/class discard spikes per interface + class
+   events AS (
+     SELECT
+         i.observation_domain_id,
+         i.ifindex,
+         i.class_id,                               -- DSCP / QoS class as exported by the device
+         date_trunc('minute', i.ts) AS ts_bucket,
+         SUM(i.packet_delta) AS drop_pkts,
+         SUM(i.octet_delta)  AS drop_octets
+     FROM interface_discards i
+     JOIN params p ON i.discard_class = p.no_buffer_class
+     WHERE i.direction = 'egress'
+     GROUP BY 1,2,3,4
+     HAVING SUM(i.packet_delta) > 0
+   ),
+
+   -- 2) Aggregate flows per minute keyed by egress interface + class
+   flow_buckets AS (
+     SELECT
+         f.observation_domain_id,
+         f.egress_ifindex AS ifindex,
+         f.ip_dscp        AS class_id,
+         date_trunc('minute', f.flow_end) AS ts_bucket,
+         f.src_addr, f.dst_addr, f.src_port, f.dst_port, f.protocol,
+         SUM(f.octet_delta)  AS bytes,
+         SUM(f.packet_delta) AS pkts
+     FROM flows f
+     -- Optional: uncomment to include only flows explicitly marked as no-buffer/class
+     -- WHERE f.flowdiscardclass = 38
+     GROUP BY 1,2,3,4,5,6,7,8,9
+   ),
+
+   -- 3) Join flows to discard spikes within a fuzzy time window and same class/interface
+   joined AS (
+     SELECT
+         e.observation_domain_id,
+         e.ifindex,
+         e.class_id,
+         e.ts_bucket,
+         e.drop_pkts,
+         e.drop_octets,
+         fb.src_addr, fb.dst_addr, fb.src_port, fb.dst_port, fb.protocol,
+         fb.bytes, fb.pkts,
+         (fb.bytes::numeric / NULLIF(e.drop_octets,0)) AS byte_share,
+         (fb.pkts::numeric  / NULLIF(e.drop_pkts,0))   AS pkt_share
+     FROM events e
+     JOIN flow_buckets fb
+       ON fb.observation_domain_id = e.observation_domain_id
+      AND fb.ifindex               = e.ifindex
+      AND fb.class_id              = e.class_id
+      AND fb.ts_bucket BETWEEN e.ts_bucket - (SELECT skew FROM params)
+                           AND     e.ts_bucket + (SELECT bucket FROM params) + (SELECT skew FROM params)
+   )
+
+   -- 4) Rank top flows per interface+class+minute and keep "elephants"
+   SELECT
+       observation_domain_id, ifindex, class_id, ts_bucket,
+       drop_pkts, drop_octets,
+       src_addr, dst_addr, src_port, dst_port, protocol,
+       bytes, pkts, byte_share, pkt_share,
+       (8.0 * bytes) / EXTRACT(EPOCH FROM (SELECT bucket FROM params)) AS bits_per_sec,
+       ROW_NUMBER() OVER (
+         PARTITION BY observation_domain_id, ifindex, class_id, ts_bucket
+         ORDER BY bytes DESC
+       ) AS rank_in_bucket
+   FROM joined
+   WHERE bytes >= (SELECT elephant_bytes_min FROM params)
+   ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
+
+   *Implementation notes:*
+
+   *  If your device maps DSCP→queue differently, join via a mapping
+      table instead of class_id = ip_dscp.
+
+   *  Adjust bucket, skew, and elephant_bytes_min for your polling
+      cadence and “elephant” threshold.
+
+   *  Helpful indexes:
+
+      -  interface_discards(discard_class, direction, ts,
+         observation_domain_id, ifindex, class_id)
+
+      -  flows(egress_ifindex, ip_dscp, flow_end, observation_domain_id)
 
 Authors' Addresses
 
