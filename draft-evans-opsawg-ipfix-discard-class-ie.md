@@ -48,25 +48,16 @@ author:
 
 
 normative:
-
-
-informative:
-     RFC7270:
      I-D.ietf-opsawg-discardmodel:
           target: https://datatracker.ietf.org/doc/draft-ietf-opsawg-discardmodel/
           title: "Information and Data Models for Packet Discard Reporting"
-     RFC9710:
-     RFC7012:
-     RFC7013:
-     RFC7011:
-     RFC6313:
-     RFC8126:
-     RFC5103:
+
+informative:
 
 
 --- abstract
 
-This document defines a new IPFIX Information Element for classifying flow-level discards which aligns with the information model defined in {{?I-D.ietf-opsawg-discardmodel}}. The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows.
+This document defines an IPFIX Information Element for classifying flow-level discards that aligns with the information model defined in {{!I-D.ietf-opsawg-discardmodel}}. The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows.
 
 --- middle
 
@@ -75,11 +66,11 @@ Introduction        {#introduction}
 
 For network operators, understanding both where and why packet loss occurs within a network is essential for effective operation. While certain types of packet loss, such as policy-based discards, are intentional and part of normal network operation, unintended packet loss can impact customer services. To automate network operations, operators must be able to detect customer-impacting packet loss, determine its root cause, and apply appropriate mitigation actions.
 
-{{?I-D.ietf-opsawg-discardmodel}} addresses this need by defining an information model that provides precise classification of packet loss, enabling accurate automated mitigation. While its YANG data model implementation provides device, interface and control-plane discards, effective automated triage often requires understanding which specific flows are impacted. For example, when mitigating congestion, operators may need to identify and trace the sources of elephant flows. This requires the ability to correlate device and interface-level discard classes with the specific flows being dropped.
+{{!I-D.ietf-opsawg-discardmodel}} addresses this need by defining an information model that provides precise classification of packet loss, enabling accurate automated mitigation. While its YANG data model implementation provides device, interface and control-plane discards, effective automated triage often requires understanding which specific flows are impacted. For example, when mitigating congestion, operators may need to identify and trace the sources of elephant flows. This requires the ability to correlate device and interface-level discard classes with the specific flows being dropped.
 
 Currently, {{?RFC7270}} defines the forwardingStatus Information Element for reporting packet forwarding outcomes in IPFIX, including various reasons for packet drops. The defined drop reason codes lack the granularity and clarity needed for automated root cause analysis and impact mitigation, however. For instance, the "For us" reason code provides insufficient context to determine appropriate mitigation actions.
 
-This document addresses these limitations by introducing a new Information Element, flowDiscardClass, to provide a consistent classification scheme for packet discards across IPFIX implementations. This new element aligns with the classification scheme defined in {{?I-D.ietf-opsawg-discardmodel}} and enables:
+This document addresses these limitations by introducing a new Information Element, flowDiscardClass, to provide a consistent classification scheme for packet discards across IPFIX implementations. This new element aligns with the classification scheme defined in {{!I-D.ietf-opsawg-discardmodel}} and enables:
 
 1. Precise detection of unintended packet loss through clear distinction between intended and unintended discards
 
@@ -107,22 +98,23 @@ Device discard counters do not by themselves establish operator intent. Discards
 Information Element   {#informationelement}
 ===================
 
-This Information Element has been specified in accordance with the guidelines in {{?RFC7013}}.
+This Information Element has been specified in accordance with the guidelines in {{!RFC7013}}.
 
 Design Rationale {#rationale}
 ----------------
 
-The mapping between {{?I-D.ietf-opsawg-discardmodel}} and the IPFIX flowDiscardClass Information Element follows these principles, maintaining consistency with the YANG model while allowing self-contained decoding from a single IE
+The mapping between {{!I-D.ietf-opsawg-discardmodel}} and the IPFIX flowDiscardClass Information Element follows these principles, maintaining consistency with the YANG model while allowing self-contained decoding from a single IE:
 
-1. The flowDiscardClass Information Element is specifically for reporting flow-level discard reasons, and therefore only represents the flow subtree from {{?I-D.ietf-opsawg-discardmodel}}. The component is implicitly "flow" and the type is implicitly "discards"; interface, device, and control-plane components are out of scope for this IE.
+1. Scope. The flowDiscardClass Information Element is specifically for reporting flow-level discard reasons, and therefore only represents the flow subtree from {{!I-D.ietf-opsawg-discardmodel}}. The component is implicitly "flow" and the type is implicitly "discards"; interface, device, and control-plane components are out of scope for this IE.
 
-2. All leaves under flow/discards are assigned codes, and aggregate (parent) nodes are also assigned codes to enable coarse-grained rollups.
+2. Hierarchy preserved. The enumeration mirrors the model: both leaves (specific reasons) and structural aggregates are assigned values so collectors can perform coarse or fine roll-ups. For L3, structural aggregates include address-family and cast (v4/v6, unicast/multicast).
 
-3. To preserve the information model’s hierarchy, the code space includes structural aggregates under flow/discards/l2 and flow/discards/l3, and for L3 the address-family and cast aggregates l3/{v4,v6}/{unicast,multicast}.
+3. Self-contained decoding. The value alone carries the discard class. Exporters and collectors can still use other IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for correlation, but they are not required to decode the class.
 
-4. Exporters and collectors MAY continue to use existing IPFIX IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy, but flowDiscardClass alone suffices to recover the discard classification.
+4. Specificity preference.  The scheme encourages reporting the most-specific known class when available; aggregate values provide a fallback when only a
+  broader category is known.
 
-5. Specificity. Exporters SHOULD report the most-specific known class for a discard (i.e., a leaf). Parent/aggregate codes MAY be used when the exporter cannot determine a more specific leaf for the event/interval.
+5. Implementation-friendly ordering. Codes are assigned in preorder (depth-first) tree order to reflect the hierarchy and simplify range/roll-up handling in implementations.
 
 
 flowDiscardClass Definition  {#flowDiscardClass-definition}
@@ -130,7 +122,7 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 
    Name: flowDiscardClass
 
-   Description: Classifies the reason a packet was discarded in a flow, using the hierarchical classification scheme defined in {{?I-D.ietf-opsawg-discardmodel}}.
+   Description: Classifies the reason a packet was discarded in a flow, using the hierarchical classification scheme defined in {{!I-D.ietf-opsawg-discardmodel}}.
 
    Abstract Data Type: unsigned8
 
@@ -140,20 +132,20 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 
    Range: 0..38 (values from {{flowDiscardClass-table}}; other values are unassigned and MUST be treated as unknown)
 
-   Reversibility: reversible (value does not change under flow reversal as per {{?RFC5103}})
+   Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
 
    Status: current
 
    ElementId: TBD
 
-   References: {{?I-D.ietf-opsawg-discardmodel}}
+   References: {{!I-D.ietf-opsawg-discardmodel}}
 
 
 
 flowDiscardClass Values  {#flowDiscardClass-values}
 -----------------------
 
-{{flowDiscardClass-table}} defines the values for the flowDiscardClass Information Element mapped from the corresponding {{?I-D.ietf-opsawg-discardmodel}} Discard Class.  The codepoints for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in {{iana}}.
+{{flowDiscardClass-table}} defines the values for the flowDiscardClass Information Element mapped from the corresponding {{!I-D.ietf-opsawg-discardmodel}} Discard Class.  The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in {{iana}}.
 
 
 | Discard Class                  | flowDiscardClass Value |
@@ -199,129 +191,157 @@ flowDiscardClass Values  {#flowDiscardClass-values}
 | no-buffer/class                       |  38      |
 {: #flowDiscardClass-table title="Flow discard classification values and corresponding discard classes"}
 
-Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy. no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the appropriate companion IE in the same record.
+Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy. 
 
+no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the appropriate companion IE in the same record.
 
-Usage with Existing Information Elements {#ExistingInformationElements}
-----------------------------------------
+Implementation Requirements {#implreq}
+---------------------------
+### Semantics and Scope {#impl-semantics}
 
-flowDiscardClass enumerates all leaf and aggregate nodes under flow/discards so that a collector can recover the full classification from this IE alone, with the exception of traffic class.
+1. Scope of this IE. flowDiscardClass MUST be used only to report flow-level discard classification under flow/discards from {{!I-D.ietf-opsawg-discardmodel}}. It MUST NOT be used for interface, device, or control-plane discard counters.
+2. Enumeration. Exporters MUST encode values only from the IANA “flowDiscardClass Values” subregistry for this IE. Collectors MUST accept both aggregate and leaf values and interpret aggregates as semantic supersets of their descendants.
+3. Unknown/Unassigned values. Collectors receiving an unknown or unassigned value MUST treat it as unknown and MUST NOT remap it to another code. Exporters MUST NOT transmit unassigned values.
+4. Reversibility. The value of flowDiscardClass MUST NOT change under biflow reversal as defined by {{!RFC5103}}.
 
-Per-class congestive loss (no-buffer/class). When reporting no-buffer/class, the traffic-class used by the queueing system MUST be present in the same record, carried in exactly one suitable IE: e.g., ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for L2. If classification occurs after remarking, exporters SHOULD use the corresponding **post-**class IE where available (or include a device queue-ID with an Options-exported mapping).
+### Exporter Requirements {#impl-exporter}
 
-Multiplicity: Exporters MUST NOT encode multiple discard reasons in a single instance of flowDiscardClass. If multiple reasons apply, export multiple records (one per reason) or use IPFIX Structured Data (e.g., a basicList of flowDiscardClass values) per {{?RFC6313}} and {{?RFC7013}}.
+1. Cardinality. A Flow Record MUST contain at most one instance of flowDiscardClass.
+2. Multiplicity. When multiple discard reasons apply to the same flow interval, exporters MUST either (a) export multiple Flow Records (one per reason) or (b) encode a basicList of flowDiscardClass values using IPFIX Structured Data per {{!RFC6313}}/{{!RFC7013}}.
+3. Specificity. Exporters SHOULD report the most-specific known class (a leaf). If the specific leaf is unknown, an appropriate parent/aggregate MAY be used.
+4. Interval semantics. When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class. Exporters SHOULD include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the affected volume.
+5. Congestive loss traffic class (no-buffer/class).
+   * If flowDiscardClass equals no-buffer/class, the traffic-class identifier used by the queueing system MUST be present in the same record, carried in exactly one suitable IE (e.g., ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for L2).
+   * If classification occurs after remarking, exporters MUST use the corresponding post-class IE where available, or provide a device queue-ID→class mapping via IPFIX Options data.
+6. Context (recommended). To aid correlation with interface/device/control-plane counters, exporters SHOULD include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
 
-Cardinality. A Flow Record MUST contain at most one flowDiscardClass IE instance. If multiple reasons apply within the same flow interval, exporters SHOULD emit multiple records (one per reason) or encode a list using IPFIX Structured Data (e.g., a basicList of flowDiscardClass values).
+### Collector Requirements {#impl-collector}
 
-Interval semantics. When exported on an interval Flow Record, flowDiscardClass indicates that at least one packet in the reported interval matched the indicated class. Exporters SHOULD include droppedPacketDeltaCount/droppedOctetDeltaCount to quantify the affected volume for that class.
+1. Lists and duplicates. Collectors MUST be able to parse a basicList of flowDiscardClass values per {{!RFC6313}}. If multiple Flow Records carry different flowDiscardClass values for the same flow keys/time bucket, collectors MAY treat them as separate reasons for analysis.
+2. Aggregate handling. When a parent/aggregate class is received, collectors MUST treat it as a coarse classification that may encompass multiple leaves.
+3. Congestive loss traffic class. For no-buffer/class, when a traffic-class IE is present, collectors MUST use it to align with per-class counters; if absent, collectors MAY apply local device mappings if available.
+4. Unknown values. Collectors MUST handle unknown/unassigned values gracefully (e.g., categorize as “unknown”) without rejecting the record.
 
+### Interoperability with Existing IPFIX IEs {#impl-interop}
+
+1. Exporters and collectors MAY also use existing IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy.
+2. flowDiscardClass alone SHOULD be sufficient to recover the discard classification (apart from the traffic-class identity required for no-buffer/class above).
+3. Exporters MAY continue to export forwardingStatus ({{?RFC7270}}) in parallel. When both are present, flowDiscardClass SHOULD be considered authoritative for discard classification.
+4. When flow sampling is active, the presence of flowDiscardClass indicates at least one sampled packet matched that class.
 
 Security Considerations {#security}
 =======================
 
-This document defines a new Information Element for flow-level discard classification to align with the information model defined in {{?I-D.ietf-opsawg-discardmodel}}.  As such, there are no  security issues related to this document, which are additional to those discussed in {{?RFC7011}}, {{?RFC7012}}.
+This document defines a new Information Element for flow-level discard classification to align with the information model defined in {{!I-D.ietf-opsawg-discardmodel}}.  As such, there are no  security issues related to this document, which are additional to those discussed in {{!RFC7011}}, {{!RFC7012}}.
 
 
 IANA Considerations {#iana}
 ===================
+IANA is requested to make the following changes under the IP Flow Information Export (IPFIX) Information Elements registry.
 
-This document requests IANA to register the flowDiscardClass Information Element in the IANA IPFIX Information Elements registry.
+## New IPFIX Information Element: flowDiscardClass
 
-IANA is requested to make the following actions in the IP Flow Information Export (IPFIX) Entities registry:
+IANA is requested to register a new Information Element as follows:
 
-1. Register the flowDiscardClass Information Element.
+* Name: flowDiscardClass
+* ElementId: TBD (to be assigned by IANA)
+* Description: Classifies the reason a packet was discarded in a flow, using the hierarchical classification scheme defined in {{!I-D.ietf-opsawg-discardmodel}}.
+* Abstract Data Type: unsigned8
+* Data Type Semantics: identifier
+* Units: none
+* Range: 0..38 (values are listed in the “flowDiscardClass Values” subregistry created below; other values are unassigned and MUST be treated as unknown)
+* Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
+* Status: current
+* Reference: This document; {{!RFC7013}}
 
-2. Create a new subregistry: "flowDiscardClass Values":
+## New Subregistry: “flowDiscardClass Values”
 
-   Registry: under IP Flow Information Export (IPFIX) Entities
+IANA is requested to create a new subregistry titled "flowDiscardClass Values" under the IPFIX Information Elements registry. This subregistry contains the
+enumerated values for the flowDiscardClass IE.
 
-   Registration Procedure: Expert Review {{RFC8126}}
+* Registration Procedure: Expert Review ({{!RFC8126}})
+* Reference: This document; {{!RFC7013}}
+* Fields:
+  - Value (integer)
+  - Name (path under  flow/discards/...)
+  - Description (optional)
+  - Reference
 
-   Reference: this document; {{RFC7013}}
-
-   Fields:
-
-   * Value (integer)
-   * Name (path under flow/discards/...)
-   * Description (optional)
-   * Reference
-
-   Initial contents: the values in {{flowDiscardClass-table}} (codes 0..38).
-
-   Allocation policy guidance to the Designated Expert(s): New values should reflect additions to or clarifications of the discard reasons in {{I-D.ietf-opsawg-discardmodel}} (or its successor) and must not repurpose existing codepoints. Backwards-compatible additions are preferred; revisions to existing entries should follow {{RFC7013}}.
-
+Designated Expert guidance: New code points should reflect additions to or clarifications of discard reasons in {{!I-D.ietf-opsawg-discardmodel}} (or its
+successor). Existing code points MUST NOT be repurposed. Backwards-compatible additions are preferred. Experts SHOULD maintain the hierarchical structure
+(e.g., assigning aggregates and leaves consistently) and, where practical, preserve preorder (depth-first) numbering to align with the existing tree.
 
 --- back
 
 Correlating Flow Discards with Interface/Device/Control-Plane Discards {#correlating}
 =======================================================================
 
-**Objective.** Enable operators to understand **which flows are impacted** when **interface**, **device**, or **control-plane** discard counters rise in the discardmodel. A typical workflow is:
+Objective. Enable operators to understand which flows are impacted when interface, device, or control-plane discard counters rise in the discardmodel. A typical workflow is:
 
-1. **Detect anomalous discards** on an interface/device/control-plane (by class and direction) using the discardmodel; then
-2. **Query flow telemetry** to identify the **impacted** flows (and, where applicable, the **causal** flows that contributed to the condition).
+1. Detect anomalous discards on an interface/device/control-plane (by class and direction) using the discardmodel; then
+2. Query flow telemetry to identify the impacted flows (and, where applicable, the causal flows that contributed to the condition).
 
 Scope Alignment (What Must Match) {#correlation-keys}
------------------------------------------------------
+---------------------------------
 
-Accurate correlation depends on joining records that describe the **same exporter/vantage, component, interface (if applicable), direction, class, and time window**:
+Accurate correlation depends on joining records that describe the same exporter/vantage, component, interface (if applicable), direction, class, and time window:
 
-* **Exporter & vantage.** Join on the same Exporter/Observation Domain (e.g., observationDomainId). Where multiple taps or pipeline stages exist, include observationPointId (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.
-* **Component & interface.**
-  * **Interface component:** include ingressInterface/egressInterface in Flow Records and match the **same ifIndex** and direction as the discardmodel counters.
-  * **Device component:** drop the interface key and aggregate across interfaces for the same exporter/time/class.
-  * **Control-plane component:** no interface key; match by exporter/time/class (and any control-plane class identifiers available).
-* **Time.** Align Flow intervals (flowStart/flowEnd, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.
+* Exporter & vantage. Join on the same Exporter/Observation Domain (e.g., observationDomainId). Where multiple taps or pipeline stages exist, include observationPointId (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.
+* Component & interface.
+  * Interface component: include ingressInterface/egressInterface in Flow Records and match the same ifIndex and direction as the discardmodel counters.
+  * Device component: drop the interface key and aggregate across interfaces for the same exporter/time/class.
+  * Control-plane component: no interface key; match by exporter/time/class (and any control-plane class identifiers available).
+* Time. Align Flow intervals (flowStart/flowEnd, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.
 
 Class and Reason Alignment {#discard-class}
--------------------------------------------
+--------------------------
 
-* **Discard class.** flowDiscardClass mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/class, etc.).
-* **Traffic class identity (when relevant).** For no-buffer/class, Exporters **SHOULD** also export the traffic-class identifier used by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or dot1qPriority for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.
+* Discard class. flowDiscardClass mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/class, etc.).
+* Traffic class identity (when relevant). For no-buffer/class, Exporters SHOULD also export the traffic-class identifier used by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or dot1qPriority for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.
 
 Recommended Exporter Context {#recommended-exporter-behaviour}
--------------------------------------------------------------
+----------------------------
 
-When exporting Flow Records that carry flowDiscardClass, Exporters **SHOULD** include:
+When exporting Flow Records that carry flowDiscardClass, Exporters SHOULD include:
 
-* **Context:** ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).
-* **Quantification:** droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.
-* **Multiplicity handling:** if multiple discard reasons apply to the same flow interval, either export **one record per reason** or use IPFIX Structured Data to encode multiple flowDiscardClass values.
+* Context: ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).
+* Quantification: droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.
+* Multiplicity handling: if multiple discard reasons apply to the same flow interval, either export one record per reason or use IPFIX Structured Data to encode multiple flowDiscardClass values.
 
 Collector Workflow (General Pattern) {#collector-workflow}
----------------------------------------------------------
+------------------------------------
 
 Given an anomaly in the discardmodel (per interface/device/control-plane, direction, class, and time):
 
-1. **Select the time bucket(s)** and affected key(s): exporter, component (and interface if applicable), direction, discard **class**.
-2. **Find impacted flows:** filter Flow Records that overlap the bucket(s) and match the exporter/component keys **and** either
-   * explicitly report the same flowDiscardClass, **or**
+1. Select the time bucket(s) and affected key(s): exporter, component (and interface if applicable), direction, discard class.
+2. Find impacted flows: filter Flow Records that overlap the bucket(s) and match the exporter/component keys and either
+   * explicitly report the same flowDiscardClass, or
    * (for aggregate classes) belong to the same traffic class and vantage where the loss is counted.
-3. **Aggregate per flow** within the bucket(s): bytes/packets and, if available, dropped-bytes/packets.
-4. **Rank or group** flows as needed:
-   * **Impacted analysis:** which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?
-   * **Causal analysis (when meaningful):** which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a no-buffer/class spike)?
-5. **Validate:** compare summed flow-level dropped deltas (if exported) to the discardmodel deltas for that bucket. Small gaps are expected (sampling, timing, vantage); large gaps suggest vantage mismatch or incomplete class mapping.
+3. Aggregate per flow within the bucket(s): bytes/packets and, if available, dropped-bytes/packets.
+4. Rank or group flows as needed:
+   * Impacted analysis: which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?
+   * Causal analysis (when meaningful): which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a no-buffer/class spike)?
+5. Validate: compare summed flow-level dropped deltas (if exported) to the discardmodel deltas for that bucket. Small gaps are expected (sampling, timing, vantage); large gaps suggest vantage mismatch or incomplete class mapping.
 
 Handling Expected Discrepancies {#handling-expected-discrepancies}
-------------------------------------------------------------------
+-------------------------------
 
-* **Vantage mismatch.** Flow telemetry captured **before** queueing/policing but counters tallied **after** will skew attribution. Use observationPointId (and device documentation) to align vantage.
-* **Class remapping.** If DSCP is remarked, use **post-**class IEs or queue-ID mappings so class identity matches where the drop is counted.
-* **Sampling/filtering.** Flow sampling reduces visibility of small flows and biases shares; where possible, rely on flow-level dropped-octet counters, or increase the bucket size to stabilize estimates.
-* **Clock skew.** Apply a small skew window (e.g., ±30 s) when joining buckets across datasets.
+* Vantage mismatch. Flow telemetry captured before queueing/policing but counters tallied after will skew attribution. Use observationPointId (and device documentation) to align vantage.
+* Class remapping. If DSCP is remarked, use post-class IEs or queue-ID mappings so class identity matches where the drop is counted.
+* Sampling/filtering. Flow sampling reduces visibility of small flows and biases shares; where possible, rely on flow-level dropped-octet counters, or increase the bucket size to stabilize estimates.
+* Clock skew. Apply a small skew window (e.g., ±30 s) when joining buckets across datasets.
 
 Operational Example: Congestive Loss (no-buffer/class) and Elephant Flows {#operational-example}
---------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
-This example illustrates the workflow above for **congestive loss** (no-buffer/class) on an egress interface. It identifies **high-volume (“elephant”) flows** most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.
+This example illustrates the workflow above for congestive loss (no-buffer/class) on an egress interface. It identifies high-volume ("elephant") flows most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.
 
-**Assumed tables (adapt names as needed):**
+Assumed tables:
 
 * flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)
 * interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)
 
-**Note:** In {{flowDiscardClass-table}}, no-buffer/class has value **38**.
+Note: In {{flowDiscardClass-table}}, no-buffer/class has value 38.
 
 ~~~ sql
 -- Identify elephant flows contributing to egress no-buffer/class drops
@@ -403,10 +423,10 @@ WHERE bytes >= (SELECT elephant_bytes_min FROM params)
 ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
 ~~~
 
-**Implementation notes:**
+Implementation notes:
 
 * If your device maps DSCP→queue differently, join via a mapping table instead of class_id = ip_dscp.
-* Adjust bucket, skew, and elephant_bytes_min for your polling cadence and “elephant” threshold.
+* Adjust bucket, skew, and elephant_bytes_min for your polling cadence and "elephant" threshold.
 * Helpful indexes:
   * interface_discards(discard_class, direction, ts, observation_domain_id, ifindex, class_id)
   * flows(egress_ifindex, ip_dscp, flow_end, observation_domain_id)
