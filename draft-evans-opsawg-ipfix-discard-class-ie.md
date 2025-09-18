@@ -254,11 +254,11 @@ IANA is requested to make the following actions in the IP Flow Information Expor
 --- back
 
 Correlating Flow Discards with Interface/Device/Control-Plane Discards {#correlating}
-======================================================================
+=======================================================================
 
 **Objective.** Enable operators to understand **which flows are impacted** when **interface**, **device**, or **control-plane** discard counters rise in the discardmodel. A typical workflow is:
 
-1. **Detect anomalous discards** on an interface/device/control-plane (by class and direction) using the discardmodel; then  
+1. **Detect anomalous discards** on an interface/device/control-plane (by class and direction) using the discardmodel; then
 2. **Query flow telemetry** to identify the **impacted** flows (and, where applicable, the **causal** flows that contributed to the condition).
 
 Scope Alignment (What Must Match) {#correlation-keys}
@@ -266,32 +266,27 @@ Scope Alignment (What Must Match) {#correlation-keys}
 
 Accurate correlation depends on joining records that describe the **same exporter/vantage, component, interface (if applicable), direction, class, and time window**:
 
-* **Exporter & vantage.** Join on the same Exporter/Observation Domain (e.g., `observationDomainId`). Where multiple taps or pipeline stages exist, include `observationPointId` (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.
-
-* **Component & interface.**  
-  – **Interface component:** include `ingressInterface`/`egressInterface` in Flow Records and match the **same ifIndex** and direction as the discardmodel counters.  
-  – **Device component:** drop the interface key and aggregate across interfaces for the same exporter/time/class.  
-  – **Control-plane component:** no interface key; match by exporter/time/class (and any control-plane class identifiers available).
-
-* **Time.** Align Flow intervals (`flowStart`/`flowEnd`, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.
+* **Exporter & vantage.** Join on the same Exporter/Observation Domain (e.g., observationDomainId). Where multiple taps or pipeline stages exist, include observationPointId (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.
+* **Component & interface.**
+  * **Interface component:** include ingressInterface/egressInterface in Flow Records and match the **same ifIndex** and direction as the discardmodel counters.
+  * **Device component:** drop the interface key and aggregate across interfaces for the same exporter/time/class.
+  * **Control-plane component:** no interface key; match by exporter/time/class (and any control-plane class identifiers available).
+* **Time.** Align Flow intervals (flowStart/flowEnd, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.
 
 Class and Reason Alignment {#discard-class}
 -------------------------------------------
 
-* **Discard class.** `flowDiscardClass` mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., `errors/l3/ttl-expired`, `policy/l3/acl`, `no-buffer/class`, etc.).
-
-* **Traffic class identity (when relevant).** For `no-buffer/class`, Exporters **SHOULD** also export the traffic-class identifier used by the queue (e.g., `ipDiffServCodePoint` / `ipClassOfService`, or `dot1qPriority` for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.
+* **Discard class.** flowDiscardClass mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/class, etc.).
+* **Traffic class identity (when relevant).** For no-buffer/class, Exporters **SHOULD** also export the traffic-class identifier used by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or dot1qPriority for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.
 
 Recommended Exporter Context {#recommended-exporter-behaviour}
 -------------------------------------------------------------
 
-When exporting Flow Records that carry `flowDiscardClass`, Exporters **SHOULD** include:
+When exporting Flow Records that carry flowDiscardClass, Exporters **SHOULD** include:
 
-* **Context:** `ingressInterface`/`egressInterface`, `observationPointId` (if applicable), time bounds (`flowStart`/`flowEnd` or an observation-time IE), and the relevant class IE (`ipDiffServCodePoint`/`ipClassOfService`/`dot1qPriority`, etc.).
-
-* **Quantification:** `droppedPacketDeltaCount` and/or `droppedOctetDeltaCount`, so per-class dropped volume from flows can be compared to discardmodel aggregates.
-
-* **Multiplicity handling:** if multiple discard reasons apply to the same flow interval, either export **one record per reason** or use IPFIX Structured Data to encode multiple `flowDiscardClass` values.
+* **Context:** ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).
+* **Quantification:** droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.
+* **Multiplicity handling:** if multiple discard reasons apply to the same flow interval, either export **one record per reason** or use IPFIX Structured Data to encode multiple flowDiscardClass values.
 
 Collector Workflow (General Pattern) {#collector-workflow}
 ---------------------------------------------------------
@@ -299,40 +294,36 @@ Collector Workflow (General Pattern) {#collector-workflow}
 Given an anomaly in the discardmodel (per interface/device/control-plane, direction, class, and time):
 
 1. **Select the time bucket(s)** and affected key(s): exporter, component (and interface if applicable), direction, discard **class**.
-2. **Find impacted flows:** filter Flow Records that overlap the bucket(s) and match the exporter/component keys **and** either  
-   * explicitly report the same `flowDiscardClass`, **or**  
+2. **Find impacted flows:** filter Flow Records that overlap the bucket(s) and match the exporter/component keys **and** either
+   * explicitly report the same flowDiscardClass, **or**
    * (for aggregate classes) belong to the same traffic class and vantage where the loss is counted.
 3. **Aggregate per flow** within the bucket(s): bytes/packets and, if available, dropped-bytes/packets.
-4. **Rank or group** flows as needed:  
-   – **Impacted analysis:** which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?  
-   – **Causal analysis (when meaningful):** which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a `no-buffer/class` spike)?
+4. **Rank or group** flows as needed:
+   * **Impacted analysis:** which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?
+   * **Causal analysis (when meaningful):** which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a no-buffer/class spike)?
 5. **Validate:** compare summed flow-level dropped deltas (if exported) to the discardmodel deltas for that bucket. Small gaps are expected (sampling, timing, vantage); large gaps suggest vantage mismatch or incomplete class mapping.
 
 Handling Expected Discrepancies {#handling-expected-discrepancies}
 ------------------------------------------------------------------
 
-* **Vantage mismatch.** Flow telemetry captured **before** queueing/policing but counters tallied **after** will skew attribution. Use `observationPointId` (and device documentation) to align vantage.
-
+* **Vantage mismatch.** Flow telemetry captured **before** queueing/policing but counters tallied **after** will skew attribution. Use observationPointId (and device documentation) to align vantage.
 * **Class remapping.** If DSCP is remarked, use **post-**class IEs or queue-ID mappings so class identity matches where the drop is counted.
-
 * **Sampling/filtering.** Flow sampling reduces visibility of small flows and biases shares; where possible, rely on flow-level dropped-octet counters, or increase the bucket size to stabilize estimates.
-
 * **Clock skew.** Apply a small skew window (e.g., ±30 s) when joining buckets across datasets.
 
-Operational Example: Congestive Loss (`no-buffer/class`) and Elephant Flows {#operational-example}
+Operational Example: Congestive Loss (no-buffer/class) and Elephant Flows {#operational-example}
 --------------------------------------------------------------------------------------------------
 
-This example illustrates the workflow above for **congestive loss** (`no-buffer/class`) on an egress interface. It identifies **high-volume (“elephant”) flows** most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.
+This example illustrates the workflow above for **congestive loss** (no-buffer/class) on an egress interface. It identifies **high-volume (“elephant”) flows** most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.
 
 **Assumed tables (adapt names as needed):**
 
-* `flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)`
-* `interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)`
+* flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)
+* interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)
 
-**Note:** In {{flowDiscardClass-table}}, `no-buffer/class` has value **38**.
+**Note:** In {{flowDiscardClass-table}}, no-buffer/class has value **38**.
 
 ~~~ sql
-
 -- Identify elephant flows contributing to egress no-buffer/class drops
 WITH params AS (
   SELECT
@@ -410,14 +401,12 @@ SELECT
 FROM joined
 WHERE bytes >= (SELECT elephant_bytes_min FROM params)
 ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
-
 ~~~
 
 **Implementation notes:**
 
-* If your device maps DSCP→queue differently, join via a mapping table instead of `class_id = ip_dscp`.
-* Adjust `bucket`, `skew`, and `elephant_bytes_min` for your polling cadence and “elephant” threshold.
+* If your device maps DSCP→queue differently, join via a mapping table instead of class_id = ip_dscp.
+* Adjust bucket, skew, and elephant_bytes_min for your polling cadence and “elephant” threshold.
 * Helpful indexes:
-  – `interface_discards(discard_class, direction, ts, observation_domain_id, ifindex, class_id)`
-  – `flows(egress_ifindex, ip_dscp, flow_end, observation_domain_id)`.
-
+  * interface_discards(discard_class, direction, ts, observation_domain_id, ifindex, class_id)
+  * flows(egress_ifindex, ip_dscp, flow_end, observation_domain_id)
