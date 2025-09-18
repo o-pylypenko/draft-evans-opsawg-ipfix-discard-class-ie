@@ -9,7 +9,7 @@
 <meta content="Oleksandr Pylypenko" name="author">
 <meta content="Karim Cheaito" name="author">
 <meta content="
-       This document defines a new IPFIX Information Element for classifying flow-level discards which aligns with the information model defined in  . The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows. 
+       This document defines an IPFIX Information Element for classifying flow-level discards that aligns with the information model defined in  . The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows. 
     " name="description">
 <meta content="xml2rfc 3.30.2" name="generator">
 <meta content="Internet-Draft" name="keyword">
@@ -1089,7 +1089,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Information Element for Flow Discard Classification</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines a new IPFIX Information Element for classifying flow-level discards which aligns with the information model defined in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span>. The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines an IPFIX Information Element for classifying flow-level discards that aligns with the information model defined in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span>. The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <div id="status-of-memo">
 <section id="section-boilerplate.1">
@@ -1158,7 +1158,18 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-flowdiscardclass-values" class="internal xref">flowDiscardClass Values</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
-                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-usage-with-existing-informa" class="internal xref">Usage with Existing Information Elements</a></p>
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-implementation-requirements" class="internal xref">Implementation Requirements</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.1">
+                    <p id="section-toc.1-1.3.2.4.2.1.1"><a href="#section-3.4.1" class="auto internal xref">3.4.1</a>.  <a href="#name-exporter-requirements" class="internal xref">Exporter Requirements</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.2">
+                    <p id="section-toc.1-1.3.2.4.2.2.1"><a href="#section-3.4.2" class="auto internal xref">3.4.2</a>.  <a href="#name-collector-requirements" class="internal xref">Collector Requirements</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.3">
+                    <p id="section-toc.1-1.3.2.4.2.3.1"><a href="#section-3.4.3" class="auto internal xref">3.4.3</a>.  <a href="#name-interoperability-with-exist" class="internal xref">Interoperability with Existing IPFIX IEs</a></p>
+</li>
+                </ul>
 </li>
             </ul>
 </li>
@@ -1167,6 +1178,14 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
             <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-new-ipfix-information-eleme" class="internal xref">New IPFIX Information Element: flowDiscardClass</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-new-subregistry-flowdiscard" class="internal xref">New Subregistry: “flowDiscardClass Values”</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
             <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-references" class="internal xref">References</a></p>
@@ -1261,22 +1280,23 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-design-rationale">
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-design-rationale" class="section-name selfRef">Design Rationale</a>
         </h3>
-<p id="section-3.1-1">The mapping between <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> and the IPFIX flowDiscardClass Information Element follows these principles, maintaining consistency with the YANG model while allowing self-contained decoding from a single IE<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">The mapping between <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> and the IPFIX flowDiscardClass Information Element follows these principles, maintaining consistency with the YANG model while allowing self-contained decoding from a single IE:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-3.1-2">
 <li id="section-3.1-2.1">
-            <p id="section-3.1-2.1.1">The flowDiscardClass Information Element is specifically for reporting flow-level discard reasons, and therefore only represents the flow subtree from <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span>. The component is implicitly "flow" and the type is implicitly "discards"; interface, device, and control-plane components are out of scope for this IE.<a href="#section-3.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-3.1-2.1.1">Scope. The flowDiscardClass Information Element is specifically for reporting flow-level discard reasons, and therefore only represents the flow subtree from <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span>. The component is implicitly "flow" and the type is implicitly "discards"; interface, device, and control-plane components are out of scope for this IE.<a href="#section-3.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-3.1-2.2">
-            <p id="section-3.1-2.2.1">All leaves under flow/discards are assigned codes, and aggregate (parent) nodes are also assigned codes to enable coarse-grained rollups.<a href="#section-3.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-3.1-2.2.1">Hierarchy preserved. The enumeration mirrors the model: both leaves (specific reasons) and structural aggregates are assigned values so collectors can perform coarse or fine roll-ups. For L3, structural aggregates include address-family and cast (v4/v6, unicast/multicast).<a href="#section-3.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-3.1-2.3">
-            <p id="section-3.1-2.3.1">To preserve the information model’s hierarchy, the code space includes structural aggregates under flow/discards/l2 and flow/discards/l3, and for L3 the address-family and cast aggregates l3/{v4,v6}/{unicast,multicast}.<a href="#section-3.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-3.1-2.3.1">Self-contained decoding. The value alone carries the discard class. Exporters and collectors can still use other IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for correlation, but they are not required to decode the class.<a href="#section-3.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-3.1-2.4">
-            <p id="section-3.1-2.4.1">Exporters and collectors <span class="bcp14">MAY</span> continue to use existing IPFIX IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy, but flowDiscardClass alone suffices to recover the discard classification.<a href="#section-3.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-3.1-2.4.1">Specificity preference.  The scheme encourages reporting the most-specific known class when available; aggregate values provide a fallback when only a
+  broader category is known.<a href="#section-3.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-3.1-2.5">
-            <p id="section-3.1-2.5.1">Specificity. Exporters <span class="bcp14">SHOULD</span> report the most-specific known class for a discard (i.e., a leaf). Parent/aggregate codes <span class="bcp14">MAY</span> be used when the exporter cannot determine a more specific leaf for the event/interval.<a href="#section-3.1-2.5.1" class="pilcrow">¶</a></p>
+            <p id="section-3.1-2.5.1">Implementation-friendly ordering. Codes are assigned in preorder (depth-first) tree order to reflect the hierarchy and simplify range/roll-up handling in implementations.<a href="#section-3.1-2.5.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1303,7 +1323,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-flowdiscardclass-values">
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-flowdiscardclass-values" class="section-name selfRef">flowDiscardClass Values</a>
         </h3>
-<p id="section-3.3-1"><a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a> defines the values for the flowDiscardClass Information Element mapped from the corresponding <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> Discard Class.  The codepoints for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in <a href="#iana" class="auto internal xref">Section 5</a>.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1"><a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a> defines the values for the flowDiscardClass Information Element mapped from the corresponding <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> Discard Class.  The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in <a href="#iana" class="auto internal xref">Section 5</a>.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <span id="name-flow-discard-classification"></span><div id="flowDiscardClass-table">
 <table class="center" id="table-1">
           <caption>
@@ -1476,19 +1496,107 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </tbody>
         </table>
 </div>
-<p id="section-3.3-3">Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy. no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) <span class="bcp14">SHOULD</span> be exported via the appropriate companion IE in the same record.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.3-3">Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.3-4">no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) <span class="bcp14">SHOULD</span> be exported via the appropriate companion IE in the same record.<a href="#section-3.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="ExistingInformationElements">
+<div id="implreq">
 <section id="section-3.4">
-        <h3 id="name-usage-with-existing-informa">
-<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-usage-with-existing-informa" class="section-name selfRef">Usage with Existing Information Elements</a>
+        <h3 id="name-implementation-requirements">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-implementation-requirements" class="section-name selfRef">Implementation Requirements</a>
         </h3>
-<p id="section-3.4-1">flowDiscardClass enumerates all leaf and aggregate nodes under flow/discards so that a collector can recover the full classification from this IE alone, with the exception of traffic class.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
-<p id="section-3.4-2">Per-class congestive loss (no-buffer/class). When reporting no-buffer/class, the traffic-class used by the queueing system <span class="bcp14">MUST</span> be present in the same record, carried in exactly one suitable IE: e.g., ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for L2. If classification occurs after remarking, exporters <span class="bcp14">SHOULD</span> use the corresponding <strong>post-</strong>class IE where available (or include a device queue-ID with an Options-exported mapping).<a href="#section-3.4-2" class="pilcrow">¶</a></p>
-<p id="section-3.4-3">Multiplicity: Exporters <span class="bcp14">MUST NOT</span> encode multiple discard reasons in a single instance of flowDiscardClass. If multiple reasons apply, export multiple records (one per reason) or use IPFIX Structured Data (e.g., a basicList of flowDiscardClass values) per <span>[<a href="#RFC6313" class="cite xref">RFC6313</a>]</span> and <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span>.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
-<p id="section-3.4-4">Cardinality. A Flow Record <span class="bcp14">MUST</span> contain at most one flowDiscardClass IE instance. If multiple reasons apply within the same flow interval, exporters <span class="bcp14">SHOULD</span> emit multiple records (one per reason) or encode a list using IPFIX Structured Data (e.g., a basicList of flowDiscardClass values).<a href="#section-3.4-4" class="pilcrow">¶</a></p>
-<p id="section-3.4-5">Interval semantics. When exported on an interval Flow Record, flowDiscardClass indicates that at least one packet in the reported interval matched the indicated class. Exporters <span class="bcp14">SHOULD</span> include droppedPacketDeltaCount/droppedOctetDeltaCount to quantify the affected volume for that class.<a href="#section-3.4-5" class="pilcrow">¶</a></p>
+<p id="section-3.4-1">### Semantics and Scope {#impl-semantics}<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-3.4-2">
+<li id="section-3.4-2.1">
+            <p id="section-3.4-2.1.1">Scope of this IE. flowDiscardClass <span class="bcp14">MUST</span> be used only to report flow-level discard classification under flow/discards from <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span>. It <span class="bcp14">MUST NOT</span> be used for interface, device, or control-plane discard counters.<a href="#section-3.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.4-2.2">
+            <p id="section-3.4-2.2.1">Enumeration. Exporters <span class="bcp14">MUST</span> encode values only from the IANA “flowDiscardClass Values” subregistry for this IE. Collectors <span class="bcp14">MUST</span> accept both aggregate and leaf values and interpret aggregates as semantic supersets of their descendants.<a href="#section-3.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.4-2.3">
+            <p id="section-3.4-2.3.1">Unknown/Unassigned values. Collectors receiving an unknown or unassigned value <span class="bcp14">MUST</span> treat it as unknown and <span class="bcp14">MUST NOT</span> remap it to another code. Exporters <span class="bcp14">MUST NOT</span> transmit unassigned values.<a href="#section-3.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-3.4-2.4">
+            <p id="section-3.4-2.4.1">Reversibility. The value of flowDiscardClass <span class="bcp14">MUST NOT</span> change under biflow reversal as defined by <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>.<a href="#section-3.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<div id="impl-exporter">
+<section id="section-3.4.1">
+          <h4 id="name-exporter-requirements">
+<a href="#section-3.4.1" class="section-number selfRef">3.4.1. </a><a href="#name-exporter-requirements" class="section-name selfRef">Exporter Requirements</a>
+          </h4>
+<ol start="1" type="1" class="normal type-1" id="section-3.4.1-1">
+<li id="section-3.4.1-1.1">
+              <p id="section-3.4.1-1.1.1">Cardinality. A Flow Record <span class="bcp14">MUST</span> contain at most one instance of flowDiscardClass.<a href="#section-3.4.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.1-1.2">
+              <p id="section-3.4.1-1.2.1">Multiplicity. When multiple discard reasons apply to the same flow interval, exporters <span class="bcp14">MUST</span> either (a) export multiple Flow Records (one per reason) or (b) encode a basicList of flowDiscardClass values using IPFIX Structured Data per <span>[<a href="#RFC6313" class="cite xref">RFC6313</a>]</span>/<span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span>.<a href="#section-3.4.1-1.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.1-1.3">
+              <p id="section-3.4.1-1.3.1">Specificity. Exporters <span class="bcp14">SHOULD</span> report the most-specific known class (a leaf). If the specific leaf is unknown, an appropriate parent/aggregate <span class="bcp14">MAY</span> be used.<a href="#section-3.4.1-1.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.1-1.4">
+              <p id="section-3.4.1-1.4.1">Interval semantics. When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class. Exporters <span class="bcp14">SHOULD</span> include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the affected volume.<a href="#section-3.4.1-1.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.1-1.5">
+              <p id="section-3.4.1-1.5.1">Congestive loss traffic class (no-buffer/class).<a href="#section-3.4.1-1.5.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.4.1-1.5.2.1">
+                  <p id="section-3.4.1-1.5.2.1.1">If flowDiscardClass equals no-buffer/class, the traffic-class identifier used by the queueing system <span class="bcp14">MUST</span> be present in the same record, carried in exactly one suitable IE (e.g., ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for L2).<a href="#section-3.4.1-1.5.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-3.4.1-1.5.2.2">
+                  <p id="section-3.4.1-1.5.2.2.1">If classification occurs after remarking, exporters <span class="bcp14">MUST</span> use the corresponding post-class IE where available, or provide a device queue-ID→class mapping via IPFIX Options data.<a href="#section-3.4.1-1.5.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+            <li id="section-3.4.1-1.6">
+              <p id="section-3.4.1-1.6.1">Context (recommended). To aid correlation with interface/device/control-plane counters, exporters <span class="bcp14">SHOULD</span> include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.<a href="#section-3.4.1-1.6.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+<div id="impl-collector">
+<section id="section-3.4.2">
+          <h4 id="name-collector-requirements">
+<a href="#section-3.4.2" class="section-number selfRef">3.4.2. </a><a href="#name-collector-requirements" class="section-name selfRef">Collector Requirements</a>
+          </h4>
+<ol start="1" type="1" class="normal type-1" id="section-3.4.2-1">
+<li id="section-3.4.2-1.1">
+              <p id="section-3.4.2-1.1.1">Lists and duplicates. Collectors <span class="bcp14">MUST</span> be able to parse a basicList of flowDiscardClass values per <span>[<a href="#RFC6313" class="cite xref">RFC6313</a>]</span>. If multiple Flow Records carry different flowDiscardClass values for the same flow keys/time bucket, collectors <span class="bcp14">MAY</span> treat them as separate reasons for analysis.<a href="#section-3.4.2-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.2-1.2">
+              <p id="section-3.4.2-1.2.1">Aggregate handling. When a parent/aggregate class is received, collectors <span class="bcp14">MUST</span> treat it as a coarse classification that may encompass multiple leaves.<a href="#section-3.4.2-1.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.2-1.3">
+              <p id="section-3.4.2-1.3.1">Congestive loss traffic class. For no-buffer/class, when a traffic-class IE is present, collectors <span class="bcp14">MUST</span> use it to align with per-class counters; if absent, collectors <span class="bcp14">MAY</span> apply local device mappings if available.<a href="#section-3.4.2-1.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.2-1.4">
+              <p id="section-3.4.2-1.4.1">Unknown values. Collectors <span class="bcp14">MUST</span> handle unknown/unassigned values gracefully (e.g., categorize as “unknown”) without rejecting the record.<a href="#section-3.4.2-1.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+<div id="impl-interop">
+<section id="section-3.4.3">
+          <h4 id="name-interoperability-with-exist">
+<a href="#section-3.4.3" class="section-number selfRef">3.4.3. </a><a href="#name-interoperability-with-exist" class="section-name selfRef">Interoperability with Existing IPFIX IEs</a>
+          </h4>
+<ol start="1" type="1" class="normal type-1" id="section-3.4.3-1">
+<li id="section-3.4.3-1.1">
+              <p id="section-3.4.3-1.1.1">Exporters and collectors <span class="bcp14">MAY</span> also use existing IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy.<a href="#section-3.4.3-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.3-1.2">
+              <p id="section-3.4.3-1.2.1">flowDiscardClass alone <span class="bcp14">SHOULD</span> be sufficient to recover the discard classification (apart from the traffic-class identity required for no-buffer/class above).<a href="#section-3.4.3-1.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.3-1.3">
+              <p id="section-3.4.3-1.3.1">Exporters <span class="bcp14">MAY</span> continue to export forwardingStatus (<span>[<a href="#RFC7270" class="cite xref">RFC7270</a>]</span>) in parallel. When both are present, flowDiscardClass <span class="bcp14">SHOULD</span> be considered authoritative for discard classification.<a href="#section-3.4.3-1.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-3.4.3-1.4">
+              <p id="section-3.4.3-1.4.1">When flow sampling is active, the presence of flowDiscardClass indicates at least one sampled packet matched that class.<a href="#section-3.4.3-1.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
 </section>
 </div>
 </section>
@@ -1506,42 +1614,84 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-iana-considerations">
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-5-1">This document requests IANA to register the flowDiscardClass Information Element in the IANA IPFIX Information Elements registry.<a href="#section-5-1" class="pilcrow">¶</a></p>
-<p id="section-5-2">IANA is requested to make the following actions in the IP Flow Information Export (IPFIX) Entities registry:<a href="#section-5-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5-3">
-<li id="section-5-3.1">
-          <p id="section-5-3.1.1">Register the flowDiscardClass Information Element.<a href="#section-5-3.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li id="section-5-3.2">
-          <p id="section-5-3.2.1">Create a new subregistry: "flowDiscardClass Values":<a href="#section-5-3.2.1" class="pilcrow">¶</a></p>
-<p id="section-5-3.2.2">
-Registry: under IP Flow Information Export (IPFIX) Entities<a href="#section-5-3.2.2" class="pilcrow">¶</a></p>
-<p id="section-5-3.2.3">
-Registration Procedure: Expert Review <span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span><a href="#section-5-3.2.3" class="pilcrow">¶</a></p>
-<p id="section-5-3.2.4">
-Reference: this document; <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span><a href="#section-5-3.2.4" class="pilcrow">¶</a></p>
-<p id="section-5-3.2.5">
-Fields:<a href="#section-5-3.2.5" class="pilcrow">¶</a></p>
+<p id="section-5-1">IANA is requested to make the following changes under the IP Flow Information Export (IPFIX) Information Elements registry.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="new-ipfix-information-element-flowdiscardclass">
+<section id="section-5.1">
+        <h3 id="name-new-ipfix-information-eleme">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-new-ipfix-information-eleme" class="section-name selfRef">New IPFIX Information Element: flowDiscardClass</a>
+        </h3>
+<p id="section-5.1-1">IANA is requested to register a new Information Element as follows:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-5-3.2.6.1">
-              <p id="section-5-3.2.6.1.1">Value (integer)<a href="#section-5-3.2.6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-5.1-2.1">
+            <p id="section-5.1-2.1.1">Name: flowDiscardClass<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5-3.2.6.2">
-              <p id="section-5-3.2.6.2.1">Name (path under flow/discards/...)<a href="#section-5-3.2.6.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-5.1-2.2">
+            <p id="section-5.1-2.2.1">ElementId: TBD (to be assigned by IANA)<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5-3.2.6.3">
-              <p id="section-5-3.2.6.3.1">Description (optional)<a href="#section-5-3.2.6.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-5.1-2.3">
+            <p id="section-5.1-2.3.1">Description: Classifies the reason a packet was discarded in a flow, using the hierarchical classification scheme defined in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span>.<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
-            <li class="normal" id="section-5-3.2.6.4">
-              <p id="section-5-3.2.6.4.1">Reference<a href="#section-5-3.2.6.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-5.1-2.4">
+            <p id="section-5.1-2.4.1">Abstract Data Type: unsigned8<a href="#section-5.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
-          </ul>
-<p id="section-5-3.2.7">
-Initial contents: the values in <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a> (codes 0..38).<a href="#section-5-3.2.7" class="pilcrow">¶</a></p>
-<p id="section-5-3.2.8">
-Allocation policy guidance to the Designated Expert(s): New values should reflect additions to or clarifications of the discard reasons in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> (or its successor) and must not repurpose existing codepoints. Backwards-compatible additions are preferred; revisions to existing entries should follow <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span>.<a href="#section-5-3.2.8" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-5.1-2.5">
+            <p id="section-5.1-2.5.1">Data Type Semantics: identifier<a href="#section-5.1-2.5.1" class="pilcrow">¶</a></p>
 </li>
-      </ol>
+          <li class="normal" id="section-5.1-2.6">
+            <p id="section-5.1-2.6.1">Units: none<a href="#section-5.1-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-2.7">
+            <p id="section-5.1-2.7.1">Range: 0..38 (values are listed in the “flowDiscardClass Values” subregistry created below; other values are unassigned and <span class="bcp14">MUST</span> be treated as unknown)<a href="#section-5.1-2.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-2.8">
+            <p id="section-5.1-2.8.1">Reversibility: reversible (value does not change under flow reversal as per <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>)<a href="#section-5.1-2.8.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-2.9">
+            <p id="section-5.1-2.9.1">Status: current<a href="#section-5.1-2.9.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.1-2.10">
+            <p id="section-5.1-2.10.1">Reference: This document; <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span><a href="#section-5.1-2.10.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="new-subregistry-flowdiscardclass-values">
+<section id="section-5.2">
+        <h3 id="name-new-subregistry-flowdiscard">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-new-subregistry-flowdiscard" class="section-name selfRef">New Subregistry: “flowDiscardClass Values”</a>
+        </h3>
+<p id="section-5.2-1">IANA is requested to create a new subregistry titled "flowDiscardClass Values" under the IPFIX Information Elements registry. This subregistry contains the
+enumerated values for the flowDiscardClass IE.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-2.1">
+            <p id="section-5.2-2.1.1">Registration Procedure: Expert Review (<span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>)<a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-2.2">
+            <p id="section-5.2-2.2.1">Reference: This document; <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span><a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-2.3">
+            <p id="section-5.2-2.3.1">Fields:<a href="#section-5.2-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-2.3.2.1">
+                <p id="section-5.2-2.3.2.1.1">Value (integer)<a href="#section-5.2-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-5.2-2.3.2.2">
+                <p id="section-5.2-2.3.2.2.1">Name (path under  flow/discards/...)<a href="#section-5.2-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-5.2-2.3.2.3">
+                <p id="section-5.2-2.3.2.3.1">Description (optional)<a href="#section-5.2-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-5.2-2.3.2.4">
+                <p id="section-5.2-2.3.2.4.1">Reference<a href="#section-5.2-2.3.2.4.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+        </ul>
+<p id="section-5.2-3">Designated Expert guidance: New code points should reflect additions to or clarifications of discard reasons in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> (or its
+successor). Existing code points <span class="bcp14">MUST NOT</span> be repurposed. Backwards-compatible additions are preferred. Experts <span class="bcp14">SHOULD</span> maintain the hierarchical structure
+(e.g., assigning aggregates and leaves consistently) and, where practical, preserve preorder (depth-first) numbering to align with the existing tree.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="sec-combined-references">
@@ -1555,26 +1705,13 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
 <a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
-<dt id="RFC2119">[RFC2119]</dt>
-        <dd>
-<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC8174">[RFC8174]</dt>
-      <dd>
-<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-</dl>
-</section>
-</div>
-<div id="sec-informative-references">
-<section id="section-6.2">
-        <h3 id="name-informative-references">
-<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
-        </h3>
-<dl class="references">
 <dt id="I-D.ietf-opsawg-discardmodel">[I-D.ietf-opsawg-discardmodel]</dt>
         <dd>
 <span class="refAuthor">Evans, J.</span>, <span class="refAuthor">Pylypenko, O.</span>, <span class="refAuthor">Haas, J.</span>, <span class="refAuthor">Kadosh, A.</span>, and <span class="refAuthor">M. Boucadair</span>, <span class="refTitle">"Information and Data Models for Packet Discard Reporting"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-opsawg-discardmodel-09</span>, <time datetime="2025-09-18" class="refDate">18 September 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-opsawg-discardmodel-09">https://datatracker.ietf.org/doc/html/draft-ietf-opsawg-discardmodel-09</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC5103">[RFC5103]</dt>
         <dd>
@@ -1596,17 +1733,26 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
         <dd>
 <span class="refAuthor">Trammell, B.</span> and <span class="refAuthor">B. Claise</span>, <span class="refTitle">"Guidelines for Authors and Reviewers of IP Flow Information Export (IPFIX) Information Elements"</span>, <span class="seriesInfo">BCP 184</span>, <span class="seriesInfo">RFC 7013</span>, <span class="seriesInfo">DOI 10.17487/RFC7013</span>, <time datetime="2013-09" class="refDate">September 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7013">https://www.rfc-editor.org/rfc/rfc7013</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC7270">[RFC7270]</dt>
-        <dd>
-<span class="refAuthor">Yourtchenko, A.</span>, <span class="refAuthor">Aitken, P.</span>, and <span class="refAuthor">B. Claise</span>, <span class="refTitle">"Cisco-Specific Information Elements Reused in IP Flow Information Export (IPFIX)"</span>, <span class="seriesInfo">RFC 7270</span>, <span class="seriesInfo">DOI 10.17487/RFC7270</span>, <time datetime="2014-06" class="refDate">June 2014</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7270">https://www.rfc-editor.org/rfc/rfc7270</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC8126">[RFC8126]</dt>
         <dd>
 <span class="refAuthor">Cotton, M.</span>, <span class="refAuthor">Leiba, B.</span>, and <span class="refAuthor">T. Narten</span>, <span class="refTitle">"Guidelines for Writing an IANA Considerations Section in RFCs"</span>, <span class="seriesInfo">BCP 26</span>, <span class="seriesInfo">RFC 8126</span>, <span class="seriesInfo">DOI 10.17487/RFC8126</span>, <time datetime="2017-06" class="refDate">June 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8126">https://www.rfc-editor.org/rfc/rfc8126</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC9710">[RFC9710]</dt>
+<dt id="RFC8174">[RFC8174]</dt>
       <dd>
-<span class="refAuthor">Boucadair, M.</span> and <span class="refAuthor">B. Claise</span>, <span class="refTitle">"Simple Fixes to the IP Flow Information Export (IPFIX) Entities IANA Registry"</span>, <span class="seriesInfo">RFC 9710</span>, <span class="seriesInfo">DOI 10.17487/RFC9710</span>, <time datetime="2025-02" class="refDate">February 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9710">https://www.rfc-editor.org/rfc/rfc9710</a>&gt;</span>. </dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-6.2">
+        <h3 id="name-informative-references">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC7270">[RFC7270]</dt>
+      <dd>
+<span class="refAuthor">Yourtchenko, A.</span>, <span class="refAuthor">Aitken, P.</span>, and <span class="refAuthor">B. Claise</span>, <span class="refTitle">"Cisco-Specific Information Elements Reused in IP Flow Information Export (IPFIX)"</span>, <span class="seriesInfo">RFC 7270</span>, <span class="seriesInfo">DOI 10.17487/RFC7270</span>, <time datetime="2014-06" class="refDate">June 2014</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7270">https://www.rfc-editor.org/rfc/rfc7270</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -1618,13 +1764,13 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
       <h2 id="name-correlating-flow-discards-w">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-correlating-flow-discards-w" class="section-name selfRef">Correlating Flow Discards with Interface/Device/Control-Plane Discards</a>
       </h2>
-<p id="appendix-A-1"><strong>Objective.</strong> Enable operators to understand <strong>which flows are impacted</strong> when <strong>interface</strong>, <strong>device</strong>, or <strong>control-plane</strong> discard counters rise in the discardmodel. A typical workflow is:<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">Objective. Enable operators to understand which flows are impacted when interface, device, or control-plane discard counters rise in the discardmodel. A typical workflow is:<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="appendix-A-2">
 <li id="appendix-A-2.1">
-          <p id="appendix-A-2.1.1"><strong>Detect anomalous discards</strong> on an interface/device/control-plane (by class and direction) using the discardmodel; then<a href="#appendix-A-2.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-A-2.1.1">Detect anomalous discards on an interface/device/control-plane (by class and direction) using the discardmodel; then<a href="#appendix-A-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li id="appendix-A-2.2">
-          <p id="appendix-A-2.2.1"><strong>Query flow telemetry</strong> to identify the <strong>impacted</strong> flows (and, where applicable, the <strong>causal</strong> flows that contributed to the condition).<a href="#appendix-A-2.2.1" class="pilcrow">¶</a></p>
+          <p id="appendix-A-2.2.1">Query flow telemetry to identify the impacted flows (and, where applicable, the causal flows that contributed to the condition).<a href="#appendix-A-2.2.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 <div id="correlation-keys">
@@ -1632,27 +1778,27 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
         <h3 id="name-scope-alignment-what-must-m">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-scope-alignment-what-must-m" class="section-name selfRef">Scope Alignment (What Must Match)</a>
         </h3>
-<p id="appendix-A.1-1">Accurate correlation depends on joining records that describe the <strong>same exporter/vantage, component, interface (if applicable), direction, class, and time window</strong>:<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-1">Accurate correlation depends on joining records that describe the same exporter/vantage, component, interface (if applicable), direction, class, and time window:<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.1-2.1">
-            <p id="appendix-A.1-2.1.1"><strong>Exporter &amp; vantage.</strong> Join on the same Exporter/Observation Domain (e.g., observationDomainId). Where multiple taps or pipeline stages exist, include observationPointId (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.<a href="#appendix-A.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.1-2.1.1">Exporter &amp; vantage. Join on the same Exporter/Observation Domain (e.g., observationDomainId). Where multiple taps or pipeline stages exist, include observationPointId (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.<a href="#appendix-A.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.1-2.2">
-            <p id="appendix-A.1-2.2.1"><strong>Component &amp; interface.</strong><a href="#appendix-A.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.1-2.2.1">Component &amp; interface.<a href="#appendix-A.1-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.1-2.2.2.1">
-                <p id="appendix-A.1-2.2.2.1.1"><strong>Interface component:</strong> include ingressInterface/egressInterface in Flow Records and match the <strong>same ifIndex</strong> and direction as the discardmodel counters.<a href="#appendix-A.1-2.2.2.1.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.1-2.2.2.1.1">Interface component: include ingressInterface/egressInterface in Flow Records and match the same ifIndex and direction as the discardmodel counters.<a href="#appendix-A.1-2.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.1-2.2.2.2">
-                <p id="appendix-A.1-2.2.2.2.1"><strong>Device component:</strong> drop the interface key and aggregate across interfaces for the same exporter/time/class.<a href="#appendix-A.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.1-2.2.2.2.1">Device component: drop the interface key and aggregate across interfaces for the same exporter/time/class.<a href="#appendix-A.1-2.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.1-2.2.2.3">
-                <p id="appendix-A.1-2.2.2.3.1"><strong>Control-plane component:</strong> no interface key; match by exporter/time/class (and any control-plane class identifiers available).<a href="#appendix-A.1-2.2.2.3.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.1-2.2.2.3.1">Control-plane component: no interface key; match by exporter/time/class (and any control-plane class identifiers available).<a href="#appendix-A.1-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
           <li class="normal" id="appendix-A.1-2.3">
-            <p id="appendix-A.1-2.3.1"><strong>Time.</strong> Align Flow intervals (flowStart/flowEnd, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.<a href="#appendix-A.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.1-2.3.1">Time. Align Flow intervals (flowStart/flowEnd, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.<a href="#appendix-A.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1664,10 +1810,10 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
         </h3>
 <ul class="normal">
 <li class="normal" id="appendix-A.2-1.1">
-            <p id="appendix-A.2-1.1.1"><strong>Discard class.</strong> flowDiscardClass mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/class, etc.).<a href="#appendix-A.2-1.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.2-1.1.1">Discard class. flowDiscardClass mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/class, etc.).<a href="#appendix-A.2-1.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.2-1.2">
-            <p id="appendix-A.2-1.2.1"><strong>Traffic class identity (when relevant).</strong> For no-buffer/class, Exporters <strong><span class="bcp14">SHOULD</span></strong> also export the traffic-class identifier used by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or dot1qPriority for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.<a href="#appendix-A.2-1.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.2-1.2.1">Traffic class identity (when relevant). For no-buffer/class, Exporters <span class="bcp14">SHOULD</span> also export the traffic-class identifier used by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or dot1qPriority for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.<a href="#appendix-A.2-1.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1677,16 +1823,16 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
         <h3 id="name-recommended-exporter-contex">
 <a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-recommended-exporter-contex" class="section-name selfRef">Recommended Exporter Context</a>
         </h3>
-<p id="appendix-A.3-1">When exporting Flow Records that carry flowDiscardClass, Exporters <strong><span class="bcp14">SHOULD</span></strong> include:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-1">When exporting Flow Records that carry flowDiscardClass, Exporters <span class="bcp14">SHOULD</span> include:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.3-2.1">
-            <p id="appendix-A.3-2.1.1"><strong>Context:</strong> ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).<a href="#appendix-A.3-2.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.3-2.1.1">Context: ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).<a href="#appendix-A.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.3-2.2">
-            <p id="appendix-A.3-2.2.1"><strong>Quantification:</strong> droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.<a href="#appendix-A.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.3-2.2.1">Quantification: droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.<a href="#appendix-A.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.3-2.3">
-            <p id="appendix-A.3-2.3.1"><strong>Multiplicity handling:</strong> if multiple discard reasons apply to the same flow interval, either export <strong>one record per reason</strong> or use IPFIX Structured Data to encode multiple flowDiscardClass values.<a href="#appendix-A.3-2.3.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.3-2.3.1">Multiplicity handling: if multiple discard reasons apply to the same flow interval, either export one record per reason or use IPFIX Structured Data to encode multiple flowDiscardClass values.<a href="#appendix-A.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1699,13 +1845,13 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
 <p id="appendix-A.4-1">Given an anomaly in the discardmodel (per interface/device/control-plane, direction, class, and time):<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="appendix-A.4-2">
 <li id="appendix-A.4-2.1">
-            <p id="appendix-A.4-2.1.1"><strong>Select the time bucket(s)</strong> and affected key(s): exporter, component (and interface if applicable), direction, discard <strong>class</strong>.<a href="#appendix-A.4-2.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.4-2.1.1">Select the time bucket(s) and affected key(s): exporter, component (and interface if applicable), direction, discard class.<a href="#appendix-A.4-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-A.4-2.2">
-            <p id="appendix-A.4-2.2.1"><strong>Find impacted flows:</strong> filter Flow Records that overlap the bucket(s) and match the exporter/component keys <strong>and</strong> either<a href="#appendix-A.4-2.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.4-2.2.1">Find impacted flows: filter Flow Records that overlap the bucket(s) and match the exporter/component keys and either<a href="#appendix-A.4-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.4-2.2.2.1">
-                <p id="appendix-A.4-2.2.2.1.1">explicitly report the same flowDiscardClass, <strong>or</strong><a href="#appendix-A.4-2.2.2.1.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.4-2.2.2.1.1">explicitly report the same flowDiscardClass, or<a href="#appendix-A.4-2.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.4-2.2.2.2">
                 <p id="appendix-A.4-2.2.2.2.1">(for aggregate classes) belong to the same traffic class and vantage where the loss is counted.<a href="#appendix-A.4-2.2.2.2.1" class="pilcrow">¶</a></p>
@@ -1713,21 +1859,21 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
             </ul>
 </li>
           <li id="appendix-A.4-2.3">
-            <p id="appendix-A.4-2.3.1"><strong>Aggregate per flow</strong> within the bucket(s): bytes/packets and, if available, dropped-bytes/packets.<a href="#appendix-A.4-2.3.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.4-2.3.1">Aggregate per flow within the bucket(s): bytes/packets and, if available, dropped-bytes/packets.<a href="#appendix-A.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-A.4-2.4">
-            <p id="appendix-A.4-2.4.1"><strong>Rank or group</strong> flows as needed:<a href="#appendix-A.4-2.4.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.4-2.4.1">Rank or group flows as needed:<a href="#appendix-A.4-2.4.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.4-2.4.2.1">
-                <p id="appendix-A.4-2.4.2.1.1"><strong>Impacted analysis:</strong> which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?<a href="#appendix-A.4-2.4.2.1.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.4-2.4.2.1.1">Impacted analysis: which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?<a href="#appendix-A.4-2.4.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.4-2.4.2.2">
-                <p id="appendix-A.4-2.4.2.2.1"><strong>Causal analysis (when meaningful):</strong> which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a no-buffer/class spike)?<a href="#appendix-A.4-2.4.2.2.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.4-2.4.2.2.1">Causal analysis (when meaningful): which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a no-buffer/class spike)?<a href="#appendix-A.4-2.4.2.2.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
           <li id="appendix-A.4-2.5">
-            <p id="appendix-A.4-2.5.1"><strong>Validate:</strong> compare summed flow-level dropped deltas (if exported) to the discardmodel deltas for that bucket. Small gaps are expected (sampling, timing, vantage); large gaps suggest vantage mismatch or incomplete class mapping.<a href="#appendix-A.4-2.5.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.4-2.5.1">Validate: compare summed flow-level dropped deltas (if exported) to the discardmodel deltas for that bucket. Small gaps are expected (sampling, timing, vantage); large gaps suggest vantage mismatch or incomplete class mapping.<a href="#appendix-A.4-2.5.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1739,16 +1885,16 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
         </h3>
 <ul class="normal">
 <li class="normal" id="appendix-A.5-1.1">
-            <p id="appendix-A.5-1.1.1"><strong>Vantage mismatch.</strong> Flow telemetry captured <strong>before</strong> queueing/policing but counters tallied <strong>after</strong> will skew attribution. Use observationPointId (and device documentation) to align vantage.<a href="#appendix-A.5-1.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.5-1.1.1">Vantage mismatch. Flow telemetry captured before queueing/policing but counters tallied after will skew attribution. Use observationPointId (and device documentation) to align vantage.<a href="#appendix-A.5-1.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.5-1.2">
-            <p id="appendix-A.5-1.2.1"><strong>Class remapping.</strong> If DSCP is remarked, use <strong>post-</strong>class IEs or queue-ID mappings so class identity matches where the drop is counted.<a href="#appendix-A.5-1.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.5-1.2.1">Class remapping. If DSCP is remarked, use post-class IEs or queue-ID mappings so class identity matches where the drop is counted.<a href="#appendix-A.5-1.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.5-1.3">
-            <p id="appendix-A.5-1.3.1"><strong>Sampling/filtering.</strong> Flow sampling reduces visibility of small flows and biases shares; where possible, rely on flow-level dropped-octet counters, or increase the bucket size to stabilize estimates.<a href="#appendix-A.5-1.3.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.5-1.3.1">Sampling/filtering. Flow sampling reduces visibility of small flows and biases shares; where possible, rely on flow-level dropped-octet counters, or increase the bucket size to stabilize estimates.<a href="#appendix-A.5-1.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.5-1.4">
-            <p id="appendix-A.5-1.4.1"><strong>Clock skew.</strong> Apply a small skew window (e.g., ±30 s) when joining buckets across datasets.<a href="#appendix-A.5-1.4.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.5-1.4.1">Clock skew. Apply a small skew window (e.g., ±30 s) when joining buckets across datasets.<a href="#appendix-A.5-1.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1758,8 +1904,8 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
         <h3 id="name-operational-example-congest">
 <a href="#appendix-A.6" class="section-number selfRef">A.6. </a><a href="#name-operational-example-congest" class="section-name selfRef">Operational Example: Congestive Loss (no-buffer/class) and Elephant Flows</a>
         </h3>
-<p id="appendix-A.6-1">This example illustrates the workflow above for <strong>congestive loss</strong> (no-buffer/class) on an egress interface. It identifies <strong>high-volume (“elephant”) flows</strong> most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.<a href="#appendix-A.6-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.6-2"><strong>Assumed tables (adapt names as needed):</strong><a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-1">This example illustrates the workflow above for congestive loss (no-buffer/class) on an egress interface. It identifies high-volume ("elephant") flows most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.<a href="#appendix-A.6-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-2">Assumed tables:<a href="#appendix-A.6-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.6-3.1">
             <p id="appendix-A.6-3.1.1">flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)<a href="#appendix-A.6-3.1.1" class="pilcrow">¶</a></p>
@@ -1768,7 +1914,7 @@ Allocation policy guidance to the Designated Expert(s): New values should reflec
             <p id="appendix-A.6-3.2.1">interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)<a href="#appendix-A.6-3.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="appendix-A.6-4"><strong>Note:</strong> In <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>, no-buffer/class has value <strong>38</strong>.<a href="#appendix-A.6-4" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-4">Note: In <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>, no-buffer/class has value 38.<a href="#appendix-A.6-4" class="pilcrow">¶</a></p>
 <div class="breakable lang-sql sourcecode" id="appendix-A.6-5">
 <pre>
 -- Identify elephant flows contributing to egress no-buffer/class drops
@@ -1850,13 +1996,13 @@ WHERE bytes &gt;= (SELECT elephant_bytes_min FROM params)
 ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
 </pre><a href="#appendix-A.6-5" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.6-6"><strong>Implementation notes:</strong><a href="#appendix-A.6-6" class="pilcrow">¶</a></p>
+<p id="appendix-A.6-6">Implementation notes:<a href="#appendix-A.6-6" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.6-7.1">
             <p id="appendix-A.6-7.1.1">If your device maps DSCP→queue differently, join via a mapping table instead of class_id = ip_dscp.<a href="#appendix-A.6-7.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.6-7.2">
-            <p id="appendix-A.6-7.2.1">Adjust bucket, skew, and elephant_bytes_min for your polling cadence and “elephant” threshold.<a href="#appendix-A.6-7.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.6-7.2.1">Adjust bucket, skew, and elephant_bytes_min for your polling cadence and "elephant" threshold.<a href="#appendix-A.6-7.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.6-7.3">
             <p id="appendix-A.6-7.3.1">Helpful indexes:<a href="#appendix-A.6-7.3.1" class="pilcrow">¶</a></p>
