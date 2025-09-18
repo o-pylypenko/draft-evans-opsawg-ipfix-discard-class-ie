@@ -47,13 +47,6 @@ author:
     email: kcheaito@amazon.com
 
 
-normative:
-     I-D.ietf-opsawg-discardmodel:
-          target: https://datatracker.ietf.org/doc/draft-ietf-opsawg-discardmodel/
-          title: "Information and Data Models for Packet Discard Reporting"
-
-informative:
-
 
 --- abstract
 
@@ -191,7 +184,7 @@ flowDiscardClass Values  {#flowDiscardClass-values}
 | no-buffer/class                       |  38      |
 {: #flowDiscardClass-table title="Flow discard classification values and corresponding discard classes"}
 
-Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy. 
+Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy.
 
 no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the appropriate companion IE in the same record.
 
