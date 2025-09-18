@@ -66,7 +66,7 @@ informative:
 
 --- abstract
 
-This document defines a new IPFIX Information Element for classifying flow-level discards which aligns with the information model defined in {{?I-D.ietf-opsawg-discardmodel}}. The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device and interface-level statistics and impacted flows.
+This document defines a new IPFIX Information Element for classifying flow-level discards which aligns with the information model defined in {{?I-D.ietf-opsawg-discardmodel}}. The flowDiscardClass Information Element provides consistent classification of packet discards across IPFIX implementations, enabling correlation between device, interface and control-plane discards and the impacted flows.
 
 --- middle
 
