@@ -1,4 +1,4 @@
 # License
 
 See the
-[guidelines for contributions](https://github.com/o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie/blob//CONTRIBUTING.md).
+[guidelines for contributions](https://github.com/o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie/blob/main/CONTRIBUTING.md).
