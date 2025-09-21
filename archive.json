@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-09-18T16:44:56.704308+00:00",
+  "timestamp": "2025-09-21T01:48:18.097291+00:00",
   "repo": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
   "labels": [
     {
@@ -205,6 +205,90 @@
       "mergedBy": "johnevansuk",
       "mergeCommit": {
         "oid": "eb5cd31c6cd2aefbee71f407d0f677b955e661a1"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 7,
+      "id": "PR_kwDOPU0KGc6pXg6D",
+      "title": "Update draft-evans-opsawg-ipfix-discard-class-ie.md",
+      "url": "https://github.com/o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie/pull/7",
+      "state": "MERGED",
+      "author": "johnevansuk",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "updated appendix + other edits",
+      "createdAt": "2025-09-18T19:49:06Z",
+      "updatedAt": "2025-09-18T19:57:23Z",
+      "baseRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
+      "baseRefName": "main",
+      "baseRefOid": "ab11e8731d9c808d819fa5277d104e2d17b5b891",
+      "headRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
+      "headRefName": "johnevansuk-patch-7",
+      "headRefOid": "5f013a62e01aea6bb8d295ed63cc16e0e3dcd2f9",
+      "closedAt": "2025-09-18T19:57:23Z",
+      "mergedAt": "2025-09-18T19:57:23Z",
+      "mergedBy": "johnevansuk",
+      "mergeCommit": {
+        "oid": "b94b2cffdab6b517d0120c84032cdaa74dc7ee96"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 8,
+      "id": "PR_kwDOPU0KGc6pXlk8",
+      "title": "Update draft-evans-opsawg-ipfix-discard-class-ie.md",
+      "url": "https://github.com/o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie/pull/8",
+      "state": "MERGED",
+      "author": "johnevansuk",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2025-09-18T19:56:09Z",
+      "updatedAt": "2025-09-18T19:56:37Z",
+      "baseRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
+      "baseRefName": "johnevansuk-patch-7",
+      "baseRefOid": "513383baa95e55c66b964969e6d5c7ee8725ad22",
+      "headRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
+      "headRefName": "johnevansuk-patch-8",
+      "headRefOid": "397bea786ef1b0e75239c4ff25dfb5527cf19ae2",
+      "closedAt": "2025-09-18T19:56:37Z",
+      "mergedAt": "2025-09-18T19:56:37Z",
+      "mergedBy": "johnevansuk",
+      "mergeCommit": {
+        "oid": "5f013a62e01aea6bb8d295ed63cc16e0e3dcd2f9"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 9,
+      "id": "PR_kwDOPU0KGc6pYx6B",
+      "title": "Update draft-evans-opsawg-ipfix-discard-class-ie.md",
+      "url": "https://github.com/o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie/pull/9",
+      "state": "MERGED",
+      "author": "johnevansuk",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "Major edits",
+      "createdAt": "2025-09-18T22:37:02Z",
+      "updatedAt": "2025-09-18T22:48:00Z",
+      "baseRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
+      "baseRefName": "main",
+      "baseRefOid": "4027d7e9ad361e8b8634ee5d113c8124c636aa53",
+      "headRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
+      "headRefName": "johnevansuk-patch-9",
+      "headRefOid": "99595d465ba72393071d410ec7074fbeb3763ffd",
+      "closedAt": "2025-09-18T22:48:00Z",
+      "mergedAt": "2025-09-18T22:48:00Z",
+      "mergedBy": "johnevansuk",
+      "mergeCommit": {
+        "oid": "96203fcca8efcaf2f48e290cac302118722c668d"
       },
       "comments": [],
       "reviews": []
