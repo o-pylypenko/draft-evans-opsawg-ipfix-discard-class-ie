@@ -190,6 +190,7 @@ no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g.,
 
 Implementation Requirements {#implreq}
 ---------------------------
+
 ### Semantics and Scope {#impl-semantics}
 
 1. Scope of this IE. flowDiscardClass MUST be used only to report flow-level discard classification under flow/discards from {{!I-D.ietf-opsawg-discardmodel}}. It MUST NOT be used for interface, device, or control-plane discard counters.
