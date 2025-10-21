@@ -236,10 +236,14 @@ Table of Contents
 
    Table 1 defines the values for the flowDiscardClass Information
    Element mapped from the corresponding [I-D.ietf-opsawg-discardmodel]
-   Discard Class.  The code points for flowDiscardClass are maintained
-   by IANA in the "flowDiscardClass Values" subregistry of the IPFIX
-   registry.  Future additions or changes are managed via Expert Review
-   as described in Section 5.
+   Discard Class.  Codes are assigned in preorder traversal (where each
+   parent is numbered before its children) to reflect the model’s
+   hierarchy.
+
+   The code points for flowDiscardClass are maintained by IANA in the
+   "flowDiscardClass Values" subregistry of the IPFIX registry.  Future
+   additions or changes are managed via Expert Review as described in
+   Section 5.
 
          +==============================+========================+
          | Discard Class                | flowDiscardClass Value |
@@ -325,9 +329,6 @@ Table of Contents
 
               Table 1: Flow discard classification values and
                        corresponding discard classes
-
-   Codes are assigned in preorder (depth-first) tree order to reflect
-   the model’s hierarchy.
 
    no-buffer/class conveys per-QoS class congestion loss; the specific
    class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the

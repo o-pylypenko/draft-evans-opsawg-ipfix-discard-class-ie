@@ -1325,7 +1325,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-flowdiscardclass-values">
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-flowdiscardclass-values" class="section-name selfRef">flowDiscardClass Values</a>
         </h3>
-<p id="section-3.3-1"><a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a> defines the values for the flowDiscardClass Information Element mapped from the corresponding <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> Discard Class.  The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in <a href="#iana" class="auto internal xref">Section 5</a>.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1"><a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a> defines the values for the flowDiscardClass Information Element mapped from the corresponding <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> Discard Class.  Codes are assigned in preorder traversal (where each parent is numbered before its children) to reflect the model’s hierarchy.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-2">The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in <a href="#iana" class="auto internal xref">Section 5</a>.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <span id="name-flow-discard-classification"></span><div id="flowDiscardClass-table">
 <table class="center" id="table-1">
           <caption>
@@ -1498,7 +1499,6 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </tbody>
         </table>
 </div>
-<p id="section-3.3-3">Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
 <p id="section-3.3-4">no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) <span class="bcp14">SHOULD</span> be exported via the appropriate companion IE in the same record.<a href="#section-3.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
