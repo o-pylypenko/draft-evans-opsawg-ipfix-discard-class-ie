@@ -138,7 +138,9 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 flowDiscardClass Values  {#flowDiscardClass-values}
 -----------------------
 
-{{flowDiscardClass-table}} defines the values for the flowDiscardClass Information Element mapped from the corresponding {{!I-D.ietf-opsawg-discardmodel}} Discard Class.  The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in {{iana}}.
+{{flowDiscardClass-table}} defines the values for the flowDiscardClass Information Element mapped from the corresponding {{!I-D.ietf-opsawg-discardmodel}} Discard Class.  Codes are assigned in preorder traversal (where each parent is numbered before its children) to reflect the model’s hierarchy.
+
+The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in {{iana}}.
 
 
 | Discard Class                  | flowDiscardClass Value |
@@ -183,8 +185,6 @@ flowDiscardClass Values  {#flowDiscardClass-values}
 | no-buffer                             |  37     |
 | no-buffer/class                       |  38      |
 {: #flowDiscardClass-table title="Flow discard classification values and corresponding discard classes"}
-
-Codes are assigned in preorder (depth-first) tree order to reflect the model’s hierarchy.
 
 no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the appropriate companion IE in the same record.
 
