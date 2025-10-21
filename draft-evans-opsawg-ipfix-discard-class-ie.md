@@ -107,7 +107,7 @@ The mapping between {{!I-D.ietf-opsawg-discardmodel}} and the IPFIX flowDiscardC
 4. Specificity preference.  The scheme encourages reporting the most-specific known class when available; aggregate values provide a fallback when only a
   broader category is known.
 
-5. Implementation-friendly ordering. Codes are assigned in preorder (depth-first) tree order to reflect the hierarchy and simplify range/roll-up handling in implementations.
+5. Implementation-friendly ordering. Codes are assigned in preorder traversal (where each parent is numbered before its children) to reflect the model’s hierarchy and simplify range/roll-up handling in implementations.
 
 
 flowDiscardClass Definition  {#flowDiscardClass-definition}
@@ -138,7 +138,7 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 flowDiscardClass Values  {#flowDiscardClass-values}
 -----------------------
 
-{{flowDiscardClass-table}} defines the values for the flowDiscardClass Information Element mapped from the corresponding {{!I-D.ietf-opsawg-discardmodel}} Discard Class.  Codes are assigned in preorder traversal (where each parent is numbered before its children) to reflect the model’s hierarchy.
+{{flowDiscardClass-table}} defines the values for the flowDiscardClass Information Element mapped from the corresponding {{!I-D.ietf-opsawg-discardmodel}} Discard Class.  Codes are assigned in preorder traversal to reflect the hierarchy.
 
 The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in {{iana}}.
 
