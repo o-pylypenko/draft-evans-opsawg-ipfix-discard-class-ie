@@ -61,9 +61,10 @@ Table of Contents
      3.2.  flowDiscardClass Definition
      3.3.  flowDiscardClass Values
      3.4.  Implementation Requirements
-       3.4.1.  Exporter Requirements
-       3.4.2.  Collector Requirements
-       3.4.3.  Interoperability with Existing IPFIX IEs
+       3.4.1.  Semantics and Scope
+       3.4.2.  Exporter Requirements
+       3.4.3.  Collector Requirements
+       3.4.4.  Interoperability with Existing IPFIX IEs
    4.  Security Considerations
    5.  IANA Considerations
      5.1.  New IPFIX Information Element: flowDiscardClass
@@ -334,7 +335,7 @@ Table of Contents
 
 3.4.  Implementation Requirements
 
-   ### Semantics and Scope {#impl-semantics}
+3.4.1.  Semantics and Scope
 
    1.  Scope of this IE. flowDiscardClass MUST be used only to report
        flow-level discard classification under flow/discards from
@@ -353,7 +354,7 @@ Table of Contents
    4.  Reversibility.  The value of flowDiscardClass MUST NOT change
        under biflow reversal as defined by [RFC5103].
 
-3.4.1.  Exporter Requirements
+3.4.2.  Exporter Requirements
 
    1.  Cardinality.  A Flow Record MUST contain at most one instance of
        flowDiscardClass.
@@ -392,7 +393,7 @@ Table of Contents
        egressInterface as applicable, and observationPointId when
        multiple pipeline stages/taps exist.
 
-3.4.2.  Collector Requirements
+3.4.3.  Collector Requirements
 
    1.  Lists and duplicates.  Collectors MUST be able to parse a
        basicList of flowDiscardClass values per [RFC6313].  If multiple
@@ -413,7 +414,7 @@ Table of Contents
        gracefully (e.g., categorize as “unknown”) without rejecting the
        record.
 
-3.4.3.  Interoperability with Existing IPFIX IEs
+3.4.4.  Interoperability with Existing IPFIX IEs
 
    1.  Exporters and collectors MAY also use existing IEs (e.g.,
        flowDirection, ipVersion, addresses, ipDiffServCodePoint) for
