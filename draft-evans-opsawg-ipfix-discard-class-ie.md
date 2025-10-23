@@ -201,17 +201,17 @@ Implementation Requirements {#implreq}
 ### Exporter Requirements {#impl-exporter}
 
 1. Cardinality. A Flow Record MUST contain at most one instance of flowDiscardClass.
-2. Multiplicity. When multiple discard reasons apply to the same flow interval, exporters MUST either (a) export multiple Flow Records (one per reason) or (b) encode a basicList of flowDiscardClass values using IPFIX Structured Data per {{!RFC6313}}/{{!RFC7013}}.
-3. Specificity. Exporters SHOULD report the most-specific known class (a leaf). If the specific leaf is unknown, an appropriate parent/aggregate MAY be used.
-4. Interval semantics. When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class. Exporters SHOULD include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the affected volume.
-5. Congestive loss traffic class (no-buffer/class).
+2. Multiplicity.  When multiple discard reasons apply to the same flow interval, exporters MUST export multiple Flow Records, one per discard reason.  Each Flow Record MUST carry the same flow keys (5-tuple, interfaces, timestamps) but a distinct flowDiscardClass value.  Where possible, exporters SHOULD include per-reason droppedPacketDeltaCount and/or droppedOctetDeltaCount to quantify the volume attributed to each specific discard class.
+   * While this approach creates multiple Flow Records for the same flow 5-tuple, it provides crucial diagnostic granularity.  Collectors can easily aggregate by summing dropped counts across records with the same flow keys, while preserving the ability to attribute loss to specific root causes.  This design maintains full fidelity of per-reason discard statistics.
+4. Specificity. Exporters SHOULD report the most-specific known class (a leaf). If the specific leaf is unknown, an appropriate parent/aggregate MAY be used.
+5. Interval semantics.  When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class.  Exporters MUST include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the volume attributed to that specific discard reason.  When multiple discard reasons affect the same flow (per point 2), the sum of per-reason dropped counts across all records for that flow represents the total flow-level discards.
+6. Congestive loss traffic class (no-buffer/class).
    * If flowDiscardClass equals no-buffer/class, the traffic-class identifier used by the queueing system MUST be present in the same record, carried in exactly one suitable IE (e.g., ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for L2).
    * If classification occurs after remarking, exporters MUST use the corresponding post-class IE where available, or provide a device queue-ID→class mapping via IPFIX Options data.
-6. Context (recommended). To aid correlation with interface/device/control-plane counters, exporters SHOULD include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
+7. Context (recommended). To aid correlation with interface/device/control-plane counters, exporters SHOULD include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
 
 ### Collector Requirements {#impl-collector}
-
-1. Lists and duplicates. Collectors MUST be able to parse a basicList of flowDiscardClass values per {{!RFC6313}}. If multiple Flow Records carry different flowDiscardClass values for the same flow keys/time bucket, collectors MAY treat them as separate reasons for analysis.
+1. Multiple records per flow.  When multiple Flow Records carry different flowDiscardClass values for the same flow keys and overlapping time intervals, collectors MUST treat them as indicating distinct discard reasons affecting the same flow. Collectors SHOULD aggregate these records when computing per-flow total discards, while preserving per-reason breakdowns for root cause analysis.
 2. Aggregate handling. When a parent/aggregate class is received, collectors MUST treat it as a coarse classification that may encompass multiple leaves.
 3. Congestive loss traffic class. For no-buffer/class, when a traffic-class IE is present, collectors MUST use it to align with per-class counters; if absent, collectors MAY apply local device mappings if available.
 4. Unknown values. Collectors MUST handle unknown/unassigned values gracefully (e.g., categorize as “unknown”) without rejecting the record.
@@ -300,7 +300,7 @@ When exporting Flow Records that carry flowDiscardClass, Exporters SHOULD includ
 
 * Context: ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).
 * Quantification: droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.
-* Multiplicity handling: if multiple discard reasons apply to the same flow interval, either export one record per reason or use IPFIX Structured Data to encode multiple flowDiscardClass values.
+* Multiplicity handling: if multiple discard reasons apply to the same flow interval, export one Flow Record per reason, each with its corresponding flowDiscardClass value and, where feasible, per-reason dropped packet/octet counts.
 
 Collector Workflow (General Pattern) {#collector-workflow}
 ------------------------------------
@@ -332,8 +332,8 @@ This example illustrates the workflow above for congestive loss (no-buffer/class
 
 Assumed tables:
 
-* flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)
-* interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)
+*  flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, dropped_octet_delta, dropped_packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)
+*  * interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)
 
 Note: In {{flowDiscardClass-table}}, no-buffer/class has value 38.
 
@@ -365,62 +365,90 @@ events AS (
 
 -- 2) Aggregate flows per minute keyed by egress interface + class
 flow_buckets AS (
-  SELECT
-      f.observation_domain_id,
-      f.egress_ifindex AS ifindex,
-      f.ip_dscp        AS class_id,
-      date_trunc('minute', f.flow_end) AS ts_bucket,
-      f.src_addr, f.dst_addr, f.src_port, f.dst_port, f.protocol,
-      SUM(f.octet_delta)  AS bytes,
-      SUM(f.packet_delta) AS pkts
-  FROM flows f
-  -- Optional: uncomment to include only flows explicitly marked as no-buffer/class
-  -- WHERE f.flowdiscardclass = 38
-  GROUP BY 1,2,3,4,5,6,7,8,9
+    SELECT
+        f.observation_domain_id,
+        f.egress_ifindex AS ifindex,
+        f.ip_dscp        AS class_id,
+        date_trunc('minute', f.flow_end) AS ts_bucket,
+        f.src_addr, f.dst_addr, f.src_port, f.dst_port, f.protocol,
+        f.flowdiscardclass,
+        SUM(f.octet_delta)  AS bytes,
+        SUM(f.packet_delta) AS pkts,
+        SUM(COALESCE(f.dropped_octet_delta, 0))  AS dropped_bytes,
+        SUM(COALESCE(f.dropped_packet_delta, 0)) AS dropped_pkts
+    FROM flows f
+    -- Note: Each record represents one flow + one discard reason.
+    -- Multiple records may exist for the same 5-tuple if multiple discard reasons occurred.
+    -- Filter to no-buffer/class if analyzing only congestion-related drops:
+    -- WHERE f.flowdiscardclass = 38
+    GROUP BY 1,2,3,4,5,6,7,8,9,10
 ),
 
+
 -- 3) Join flows to discard spikes within a fuzzy time window and same class/interface
-joined AS (
-  SELECT
-      e.observation_domain_id,
-      e.ifindex,
-      e.class_id,
-      e.ts_bucket,
-      e.drop_pkts,
-      e.drop_octets,
-      fb.src_addr, fb.dst_addr, fb.src_port, fb.dst_port, fb.protocol,
-      fb.bytes, fb.pkts,
-      (fb.bytes::numeric / NULLIF(e.drop_octets,0)) AS byte_share,
-      (fb.pkts::numeric  / NULLIF(e.drop_pkts,0))   AS pkt_share
-  FROM events e
-  JOIN flow_buckets fb
-    ON fb.observation_domain_id = e.observation_domain_id
-   AND fb.ifindex               = e.ifindex
-   AND fb.class_id              = e.class_id
-   AND fb.ts_bucket BETWEEN e.ts_bucket - (SELECT skew FROM params)
-                        AND     e.ts_bucket + (SELECT bucket FROM params) + (SELECT skew FROM params)
-)
+   joined AS (
+     SELECT
+         e.observation_domain_id,
+         e.ifindex,
+         e.class_id,
+         e.ts_bucket,
+         e.drop_pkts,
+         e.drop_octets,
+         fb.src_addr, fb.dst_addr, fb.src_port, fb.dst_port, fb.protocol,
+         fb.flowdiscardclass,
+         fb.bytes, fb.pkts,
+         fb.dropped_bytes, fb.dropped_pkts,
+         (fb.bytes::numeric / NULLIF(e.drop_octets,0)) AS byte_share,
+         (fb.pkts::numeric  / NULLIF(e.drop_pkts,0))   AS pkt_share,
+         (fb.dropped_bytes::numeric / NULLIF(e.drop_octets,0)) AS dropped_byte_share,
+         (fb.dropped_pkts::numeric  / NULLIF(e.drop_pkts,0))   AS dropped_pkt_share
+     FROM events e
+     JOIN flow_buckets fb
+       ON fb.observation_domain_id = e.observation_domain_id
+      AND fb.ifindex               = e.ifindex
+      AND fb.class_id              = e.class_id
+      AND fb.flowdiscardclass      = (SELECT no_buffer_class FROM params)  -- Match the discard reason
+      AND fb.ts_bucket BETWEEN e.ts_bucket - (SELECT skew FROM params)
+                           AND     e.ts_bucket + (SELECT bucket FROM params) + (SELECT skew FROM params)
+   )
 
 -- 4) Rank top flows per interface+class+minute and keep "elephants"
-SELECT
-    observation_domain_id, ifindex, class_id, ts_bucket,
-    drop_pkts, drop_octets,
-    src_addr, dst_addr, src_port, dst_port, protocol,
-    bytes, pkts, byte_share, pkt_share,
-    (8.0 * bytes) / EXTRACT(EPOCH FROM (SELECT bucket FROM params)) AS bits_per_sec,
-    ROW_NUMBER() OVER (
-      PARTITION BY observation_domain_id, ifindex, class_id, ts_bucket
-      ORDER BY bytes DESC
-    ) AS rank_in_bucket
-FROM joined
-WHERE bytes >= (SELECT elephant_bytes_min FROM params)
-ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
+   SELECT
+       observation_domain_id, ifindex, class_id, ts_bucket,
+       drop_pkts, drop_octets,
+       src_addr, dst_addr, src_port, dst_port, protocol,
+       flowdiscardclass,
+       bytes, pkts, byte_share, pkt_share,
+       dropped_bytes, dropped_pkts, dropped_byte_share, dropped_pkt_share,
+       (8.0 * bytes) / EXTRACT(EPOCH FROM (SELECT bucket FROM params)) AS bits_per_sec,
+       (8.0 * dropped_bytes) / EXTRACT(EPOCH FROM (SELECT bucket FROM params)) AS dropped_bits_per_sec,
+       ROW_NUMBER() OVER (
+         PARTITION BY observation_domain_id, ifindex, class_id, ts_bucket
+         ORDER BY dropped_bytes DESC  -- Rank by actual dropped volume
+       ) AS rank_in_bucket
+   FROM joined
+   WHERE bytes >= (SELECT elephant_bytes_min FROM params)
+   ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
+
 ~~~
+ 
 
 Implementation notes:
 
-* If your device maps DSCP→queue differently, join via a mapping table instead of class_id = ip_dscp.
-* Adjust bucket, skew, and elephant_bytes_min for your polling cadence and "elephant" threshold.
-* Helpful indexes:
-  * interface_discards(discard_class, direction, ts, observation_domain_id, ifindex, class_id)
-  * flows(egress_ifindex, ip_dscp, flow_end, observation_domain_id)
+   *  If your device maps DSCP→queue differently, join via a mapping table instead of class_id = ip_dscp.
+
+   *  Adjust bucket, skew, and elephant_bytes_min for your polling adence and "elephant" threshold.
+
+   *  This query filters to no-buffer/class (value 38) in the JOIN. To analyze multiple discard reasons, either remove the flowdiscardclass filter or use UNION ALL with different reason values.
+
+   *  The query ranks flows by dropped_bytes to identify the worst-affected flows. To identify causal flows (heavy senders that triggered the congestion), rank by bytes instead.
+
+   *  Output includes both dropped_byte_share (this flow's fraction of total interface drops) and byte_share (this flow's fraction of total interface traffic) to distinguish victims from causes.
+
+   *  Helpful indexes:
+
+      -  interface_discards(discard_class, direction, ts, observation_domain_id, ifindex, class_id)
+
+      -  flows(egress_ifindex, ip_dscp, flowdiscardclass, flow_end, bservation_domain_id)
+
+      -  Consider a covering index: flows(egress_ifindex, flowdiscardclass, p_dscp, flow_end) INCLUDE (observation_domain_id, octet_delta, packet_delta, dropped_octet_delta, dropped_packet_delta, src_addr, dst_addr, src_port, dst_port, protocol)
