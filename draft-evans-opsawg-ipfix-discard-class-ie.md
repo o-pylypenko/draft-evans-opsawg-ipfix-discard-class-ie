@@ -268,187 +268,158 @@ successor). Existing code points MUST NOT be repurposed. Backwards-compatible ad
 --- back
 
 Correlating Flow Discards with Interface/Device/Control-Plane Discards {#correlating}
-=======================================================================
+======================================================================
 
-Objective. Enable operators to understand which flows are impacted when interface, device, or control-plane discard counters rise in the discardmodel. A typical workflow is:
+This appendix is non-normative. It describes how to map high-level interface discard counters (from {{!I-D.ietf-opsawg-discardmodel}}) to the specific flows responsible for or affected by those discards.
 
-1. Detect anomalous discards on an interface/device/control-plane (by class and direction) using the discardmodel; then
-2. Query flow telemetry to identify the impacted flows (and, where applicable, the causal flows that contributed to the condition).
+Correlation Keys {#correlation-keys}
+----------------
 
-Scope Alignment (What Must Match) {#correlation-keys}
----------------------------------
+To correlate a discard counter anomaly with flow records, the collector must join data on three key dimensions:
 
-Accurate correlation depends on joining records that describe the same exporter/vantage, component, interface (if applicable), direction, class, and time window:
+1. Time: Align the counter collection interval with the Flow Record start/end times (allowing for small clock skew).
 
-* Exporter & vantage. Join on the same Exporter/Observation Domain (e.g., observationDomainId). Where multiple taps or pipeline stages exist, include observationPointId (and, if available, line-card/port identifiers) so flow data and counters represent comparable points.
-* Component & interface.
-  * Interface component: include ingressInterface/egressInterface in Flow Records and match the same ifIndex and direction as the discardmodel counters.
-  * Device component: drop the interface key and aggregate across interfaces for the same exporter/time/class.
-  * Control-plane component: no interface key; match by exporter/time/class (and any control-plane class identifiers available).
-* Time. Align Flow intervals (flowStart/flowEnd, or an observation-time IE) with the sampling/roll-up interval of the discardmodel counters. In practice, bucket both datasets (e.g., 1-minute buckets) and allow small skew to cover clock/polling jitter.
+2. Location: Match the Observation Domain and Interface.
+   * For Ingress discards: match ingressInterface.
+   * For Egress discards: match egressInterface.
 
-Class and Reason Alignment {#discard-class}
---------------------------
+3. Discard Class: Match the YANG discard-class leaf with the IPFIX flowDiscardClass value.
 
-* Discard class. flowDiscardClass mirrors the discardmodel hierarchy (parents + leaves). Select the value(s) that match the anomaly (e.g., errors/l3/ttl-expired, policy/l3/acl, no-buffer/class, etc.).
-* Traffic class identity (when relevant). For no-buffer/class, Exporters SHOULD also export the traffic-class identifier used by the queue (e.g., ipDiffServCodePoint / ipClassOfService, or dot1qPriority for L2). If the device uses internal queue IDs, provide a mapping (via Options data or out-of-band config) so collectors can align Flow Records with per-class counters.
+   * Note: If the drop is specific to a traffic class (e.g., no-buffer/class), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.
 
-Recommended Exporter Context {#recommended-exporter-behaviour}
-----------------------------
+Analysis Strategies {#analysis-strategies}
+-------------------
 
-When exporting Flow Records that carry flowDiscardClass, Exporters SHOULD include:
+Once flow records are correlated with discard counters, operators can rank or group flows to determine:
 
-* Context: ingressInterface/egressInterface, observationPointId (if applicable), time bounds (flowStart/flowEnd or an observation-time IE), and the relevant class IE (ipDiffServCodePoint/ipClassOfService/dot1qPriority, etc.).
-* Quantification: droppedPacketDeltaCount and/or droppedOctetDeltaCount, so per-class dropped volume from flows can be compared to discardmodel aggregates.
-* Multiplicity handling: if multiple discard reasons apply to the same flow interval, export one Flow Record per reason, each with its corresponding flowDiscardClass value and, where feasible, per-reason dropped packet/octet counts.
+* Impacted analysis: Which flows suffered loss? This is determined by grouping flows by the presence of the flowDiscardClass (or summing dropped-octets/packets) to identify the symptomatic flows of the event.
 
-Collector Workflow (General Pattern) {#collector-workflow}
-------------------------------------
+* Causal analysis (when meaningful): Which flows likely contributed to the interface/device condition? For congestive drops (e.g. no-buffer/class), this is determined by identifying the top senders (by total volume or rate) in the same traffic class and egress interface during the anomaly.
 
-Given an anomaly in the discardmodel (per interface/device/control-plane, direction, class, and time):
+Operational Example: Impacted Flows (Congestion Drops) {#impacted-flows}
+------------------------------------------------------
 
-1. Select the time bucket(s) and affected key(s): exporter, component (and interface if applicable), direction, discard class.
-2. Find impacted flows: filter Flow Records that overlap the bucket(s) and match the exporter/component keys and either
-   * explicitly report the same flowDiscardClass, or
-   * (for aggregate classes) belong to the same traffic class and vantage where the loss is counted.
-3. Aggregate per flow within the bucket(s): bytes/packets and, if available, dropped-bytes/packets.
-4. Rank or group flows as needed:
-   * Impacted analysis: which flows suffered loss (by dropped-octets/packets, or by presence of the discard class)?
-   * Causal analysis (when meaningful): which flows likely contributed to the interface/device condition (e.g., top senders in the same class and egress interface during a no-buffer/class spike)?
-5. Validate: compare summed flow-level dropped deltas (if exported) to the discardmodel deltas for that bucket. Small gaps are expected (sampling, timing, vantage); large gaps suggest vantage mismatch or incomplete class mapping.
+Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0).
 
-Handling Expected Discrepancies {#handling-expected-discrepancies}
+1. Signal: Interface discard counter
+
+   * Time: 2025-09-18 10:00:00 – 10:01:00
+   * Observation Domain: 1234
+   * Interface: 10 (egress)
+   * Class: no-buffer/class (value 38; see {{flowDiscardClass-table}})
+   * Queue/DSCP: 0
+
+2. Correlation: SQL Query
+
+   The operator queries the IPFIX store to perform impact analysis — identifying symptomatic flows of the congestion event.
+
+   ```sql
+   SELECT
+       src_addr,
+       dst_addr,
+       l4_dst_port,
+       protocol,
+       SUM(droppedPacketDeltaCount) AS total_drops
+   FROM flow_records
+   WHERE
+       -- 0. Match Observation Domain
+       observationDomainId = 1234
+       -- 1. Match Location (egress interface)
+       AND egressInterface = 10
+       -- 2. Match Time Window (any overlap with counter interval)
+       AND flowEnd   >= '2025-09-18 10:00:00'
+       AND flowStart <= '2025-09-18 10:01:00'
+       -- 3. Match Discard Class (no-buffer/class)
+       AND flowDiscardClass = 38
+       -- 4. Match Traffic Class context (Best Effort)
+       AND ipDiffServCodePoint = 0
+   GROUP BY
+       src_addr, dst_addr, l4_dst_port, protocol
+   ORDER BY
+       total_drops DESC
+   LIMIT 10;
+   ```
+
+3. Result
+
+   The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion.
+
+| src_addr   | dst_addr      | l4_dst_port | protocol | total_drops |
+| :--------- | :------------ | :---------- | :------- | ----------: |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |       15400 |
+| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |        2100 |
+
+Operational Example: Causal Flows (Congestion Drops) {#causal-flows}
+----------------------------------------------------
+
+Using the same scenario as in {{impacted-flows}}, the operator now wants to identify flows that likely caused the congestion — that is, heavy senders in the affected queue and interface during the anomaly. These flows may or may not themselves have experienced drops.
+
+1. Signal: Interface discard counter
+
+   Same as in Section A.3:
+
+   * Time: 2025-09-18 10:00:00 – 10:01:00
+   * Observation Domain: 1234
+   * Interface: 10 (egress)
+   * Class: no-buffer/class (value 38)
+   * Queue/DSCP: 0
+
+2. Correlation: SQL Query
+
+   The operator queries the IPFIX store to perform a causal analysis by ranking flows by total traffic volume in the same time window, interface, and traffic class. The query does not require flowDiscardClass = 38, since flows can contribute to congestion even if only some packets (or none of the sampled packets) were dropped.
+
+   ```sql
+   SELECT
+       src_addr,
+       dst_addr,
+       l4_dst_port,
+       protocol,
+       SUM(octetDeltaCount)          AS total_bytes,
+       SUM(packetDeltaCount)         AS total_packets,
+       SUM(droppedPacketDeltaCount)  AS total_drops
+   FROM flow_records
+   WHERE
+       -- 0. Match Observation Domain
+       observationDomainId = 1234
+       -- 1. Match Location (egress interface)
+       AND egressInterface = 10
+       -- 2. Match Time Window (any overlap with counter interval)
+       AND flowEnd   >= '2025-09-18 10:00:00'
+       AND flowStart <= '2025-09-18 10:01:00'
+       -- 3. Match Traffic Class context (Best Effort queue)
+       AND ipDiffServCodePoint = 0
+   GROUP BY
+       src_addr, dst_addr, l4_dst_port, protocol
+   ORDER BY
+       total_bytes DESC
+   LIMIT 10;
+   ```
+
+3. Result
+
+   This query returns flows that carried the most traffic through the congested interface and queue during the interval. These high-volume flows are candidates for having contributed to the congestion. The total_drops column (if present) can still be used to see which of these heavy flows also suffered loss.
+
+| src_addr    | dst_addr      | l4_port | total_bytes | total_drops |
+| :---        | :---          | :---    | :---        | :---        |
+| 10.0.0.5    | 192.0.2.200   | 443     | 850 MB      | 0           |
+| 192.0.2.10  | 198.51.100.55 | 443     | 15 MB       | 15,400      |
+
+In this example, the flow from 10.0.0.5 transferred 850 MB without drops, while the smaller flow from 192.0.2.10 suffered significant packet loss.
+
+Implementation Note on Sampling {#sampling}
 -------------------------------
 
-* Vantage mismatch. Flow telemetry captured before queueing/policing but counters tallied after will skew attribution. Use observationPointId (and device documentation) to align vantage.
-* Class remapping. If DSCP is remarked, use post-class IEs or queue-ID mappings so class identity matches where the drop is counted.
-* Sampling/filtering. Flow sampling reduces visibility of small flows and biases shares; where possible, rely on flow-level dropped-octet counters, or increase the bucket size to stabilize estimates.
-* Clock skew. Apply a small skew window (e.g., ±30 s) when joining buckets across datasets.
+When flow sampling is active, flowDiscardClass indicates that a sampled packet was dropped.  To estimate the total (unsampled) flow-level impact and compare it with interface counters (which are typically unsampled), operators can apply a sampling-rate multiplier to the flow counters (droppedPacketDeltaCount and/or droppedOctetDeltaCount).
 
-Operational Example: Congestive Loss (no-buffer/class) and Elephant Flows {#operational-example}
--------------------------------------------------------------------------
+Let:
+   *  p = the sampling probability (e.g., 0.01 for 1-in-100 sampling)
+   *  N = 1 / p be the corresponding "1-in-N" sampling interval.
 
-This example illustrates the workflow above for congestive loss (no-buffer/class) on an egress interface. It identifies high-volume ("elephant") flows most likely responsible for a spike by joining per-class interface discards with per-class, per-interface flow aggregates and ranking flows by bytes/rate.
+The sampling-rate multiplier is N.  Estimated totals are then:
+   * estimated_total_dropped_packets  = droppedPacketDeltaCount * N
+   * estimated_total_dropped_octets   = droppedOctetDeltaCount  * N
 
-Assumed tables:
+For example:
+If the exporter samples 1 in every 100 packets, the multiplier is 100.  If the exporter samples 1 in every 1000 packets, the multiplier is 1000.
 
-*  flows(observation_domain_id, egress_ifindex, flow_start, flow_end, octet_delta, packet_delta, dropped_octet_delta, dropped_packet_delta, ip_dscp, src_addr, dst_addr, src_port, dst_port, protocol, flowdiscardclass)
-*  * interface_discards(observation_domain_id, ifindex, direction, discard_class, class_id, ts, packet_delta, octet_delta)
-
-Note: In {{flowDiscardClass-table}}, no-buffer/class has value 38.
-
-~~~ sql
--- Identify elephant flows contributing to egress no-buffer/class drops
-WITH params AS (
-  SELECT
-    38::smallint AS no_buffer_class,          -- flowDiscardClass for no-buffer/class (Table 1)
-    interval '1 minute' AS bucket,            -- analysis granularity
-    interval '30 seconds' AS skew,            -- clock/bucket tolerance
-    100000000::bigint AS elephant_bytes_min   -- 100 MB per bucket (example threshold)
-),
-
--- 1) Per-minute egress no-buffer/class discard spikes per interface + class
-events AS (
-  SELECT
-      i.observation_domain_id,
-      i.ifindex,
-      i.class_id,                               -- DSCP / QoS class as exported by the device
-      date_trunc('minute', i.ts) AS ts_bucket,
-      SUM(i.packet_delta) AS drop_pkts,
-      SUM(i.octet_delta)  AS drop_octets
-  FROM interface_discards i
-  JOIN params p ON i.discard_class = p.no_buffer_class
-  WHERE i.direction = 'egress'
-  GROUP BY 1,2,3,4
-  HAVING SUM(i.packet_delta) > 0
-),
-
--- 2) Aggregate flows per minute keyed by egress interface + class
-flow_buckets AS (
-    SELECT
-        f.observation_domain_id,
-        f.egress_ifindex AS ifindex,
-        f.ip_dscp        AS class_id,
-        date_trunc('minute', f.flow_end) AS ts_bucket,
-        f.src_addr, f.dst_addr, f.src_port, f.dst_port, f.protocol,
-        f.flowdiscardclass,
-        SUM(f.octet_delta)  AS bytes,
-        SUM(f.packet_delta) AS pkts,
-        SUM(COALESCE(f.dropped_octet_delta, 0))  AS dropped_bytes,
-        SUM(COALESCE(f.dropped_packet_delta, 0)) AS dropped_pkts
-    FROM flows f
-    -- Note: Each record represents one flow + one discard reason.
-    -- Multiple records may exist for the same 5-tuple if multiple discard reasons occurred.
-    -- Filter to no-buffer/class if analyzing only congestion-related drops:
-    -- WHERE f.flowdiscardclass = 38
-    GROUP BY 1,2,3,4,5,6,7,8,9,10
-),
-
-
--- 3) Join flows to discard spikes within a fuzzy time window and same class/interface
-   joined AS (
-     SELECT
-         e.observation_domain_id,
-         e.ifindex,
-         e.class_id,
-         e.ts_bucket,
-         e.drop_pkts,
-         e.drop_octets,
-         fb.src_addr, fb.dst_addr, fb.src_port, fb.dst_port, fb.protocol,
-         fb.flowdiscardclass,
-         fb.bytes, fb.pkts,
-         fb.dropped_bytes, fb.dropped_pkts,
-         (fb.bytes::numeric / NULLIF(e.drop_octets,0)) AS byte_share,
-         (fb.pkts::numeric  / NULLIF(e.drop_pkts,0))   AS pkt_share,
-         (fb.dropped_bytes::numeric / NULLIF(e.drop_octets,0)) AS dropped_byte_share,
-         (fb.dropped_pkts::numeric  / NULLIF(e.drop_pkts,0))   AS dropped_pkt_share
-     FROM events e
-     JOIN flow_buckets fb
-       ON fb.observation_domain_id = e.observation_domain_id
-      AND fb.ifindex               = e.ifindex
-      AND fb.class_id              = e.class_id
-      AND fb.flowdiscardclass      = (SELECT no_buffer_class FROM params)  -- Match the discard reason
-      AND fb.ts_bucket BETWEEN e.ts_bucket - (SELECT skew FROM params)
-                           AND     e.ts_bucket + (SELECT bucket FROM params) + (SELECT skew FROM params)
-   )
-
--- 4) Rank top flows per interface+class+minute and keep "elephants"
-   SELECT
-       observation_domain_id, ifindex, class_id, ts_bucket,
-       drop_pkts, drop_octets,
-       src_addr, dst_addr, src_port, dst_port, protocol,
-       flowdiscardclass,
-       bytes, pkts, byte_share, pkt_share,
-       dropped_bytes, dropped_pkts, dropped_byte_share, dropped_pkt_share,
-       (8.0 * bytes) / EXTRACT(EPOCH FROM (SELECT bucket FROM params)) AS bits_per_sec,
-       (8.0 * dropped_bytes) / EXTRACT(EPOCH FROM (SELECT bucket FROM params)) AS dropped_bits_per_sec,
-       ROW_NUMBER() OVER (
-         PARTITION BY observation_domain_id, ifindex, class_id, ts_bucket
-         ORDER BY dropped_bytes DESC  -- Rank by actual dropped volume
-       ) AS rank_in_bucket
-   FROM joined
-   WHERE bytes >= (SELECT elephant_bytes_min FROM params)
-   ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
-
-~~~
-
-
-Implementation notes:
-
-   *  If your device maps DSCP→queue differently, join via a mapping table instead of class_id = ip_dscp.
-
-   *  Adjust bucket, skew, and elephant_bytes_min for your polling adence and "elephant" threshold.
-
-   *  This query filters to no-buffer/class (value 38) in the JOIN. To analyze multiple discard reasons, either remove the flowdiscardclass filter or use UNION ALL with different reason values.
-
-   *  The query ranks flows by dropped_bytes to identify the worst-affected flows. To identify causal flows (heavy senders that triggered the congestion), rank by bytes instead.
-
-   *  Output includes both dropped_byte_share (this flow's fraction of total interface drops) and byte_share (this flow's fraction of total interface traffic) to distinguish victims from causes.
-
-   *  Helpful indexes:
-
-      -  interface_discards(discard_class, direction, ts, observation_domain_id, ifindex, class_id)
-
-      -  flows(egress_ifindex, ip_dscp, flowdiscardclass, flow_end, bservation_domain_id)
-
-      -  Consider a covering index: flows(egress_ifindex, flowdiscardclass, p_dscp, flow_end) INCLUDE (observation_domain_id, octet_delta, packet_delta, dropped_octet_delta, dropped_packet_delta, src_addr, dst_addr, src_port, dst_port, protocol)
+Exporters typically report their sampling configuration via IPFIX (samplingInterval and/or samplingProbability).  Because sampling is probabilistic, these estimates are approximate; using larger time windows and higher-volume aggregates tends to make them more robust.
