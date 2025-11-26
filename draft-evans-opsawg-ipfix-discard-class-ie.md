@@ -285,7 +285,7 @@ To correlate a discard counter anomaly with flow records, the collector must joi
 
 3. Discard Class: Match the YANG discard-class leaf with the IPFIX flowDiscardClass value.
 
-* Note: If the drop is specific to a traffic class (e.g., no-buffer/class), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.
+   * Note: If the drop is specific to a traffic class (e.g., no-buffer/class), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.
 
 Analysis Strategies {#analysis-strategies}
 -------------------
@@ -344,10 +344,10 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
 
    The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion.
 
-   | src_addr   | dst_addr      | l4_dst_port | protocol | total_drops |
-   | :--------- | :------------ | :---------- | :------- | ----------: |
-   | 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |       15400 |
-   | 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |        2100 |
+| src_addr   | dst_addr      | l4_dst_port | protocol | total_drops |
+| :--------- | :------------ | :---------- | :------- | ----------: |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |       15400 |
+| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |        2100 |
 
 Operational Example: Causal Flows (Congestion Drops) {#causal-flows}
 ----------------------------------------------------
@@ -399,12 +399,12 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
 
    This query returns flows that carried the most traffic through the congested interface and queue during the interval. These high-volume flows are candidates for having contributed to the congestion. The total_drops column (if present) can still be used to see which of these heavy flows also suffered loss.
 
-      | src_addr    | dst_addr      | l4_port | total_bytes | total_drops |
-      | :---        | :---          | :---    | :---        | :---        |
-      | 10.0.0.5    | 192.0.2.200   | 443     | 850 MB      | 0           |
-      | 192.0.2.10  | 198.51.100.55 | 443     | 15 MB       | 15,400      |
- 
-   In this example, the flow from 10.0.0.5 transferred 850 MB without drops, while the smaller flow from 192.0.2.10 suffered significant packet loss.
+| src_addr    | dst_addr      | l4_port | total_bytes | total_drops |
+| :---        | :---          | :---    | :---        | :---        |
+| 10.0.0.5    | 192.0.2.200   | 443     | 850 MB      | 0           |
+| 192.0.2.10  | 198.51.100.55 | 443     | 15 MB       | 15,400      |
+      
+In this example, the flow from 10.0.0.5 transferred 850 MB without drops, while the smaller flow from 192.0.2.10 suffered significant packet loss.
 
 Implementation Note on Sampling {#sampling}
 -------------------------------
@@ -423,4 +423,3 @@ For example:
 If the exporter samples 1 in every 100 packets, the multiplier is 100.  If the exporter samples 1 in every 1000 packets, the multiplier is 1000.
 
 Exporters typically report their sampling configuration via IPFIX (samplingInterval and/or samplingProbability).  Because sampling is probabilistic, these estimates are approximate; using larger time windows and higher-volume aggregates tends to make them more robust.
-
