@@ -431,7 +431,7 @@ flow_buckets AS (
    ORDER BY ts_bucket, observation_domain_id, ifindex, class_id, rank_in_bucket;
 
 ~~~
- 
+
 
 Implementation notes:
 
