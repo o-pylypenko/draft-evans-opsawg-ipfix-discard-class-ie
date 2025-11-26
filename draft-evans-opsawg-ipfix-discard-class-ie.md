@@ -403,7 +403,7 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
       | :---        | :---          | :---    | :---        | :---        |
       | 10.0.0.5    | 192.0.2.200   | 443     | 850 MB      | 0           |
       | 192.0.2.10  | 198.51.100.55 | 443     | 15 MB       | 15,400      |
-      
+ 
    In this example, the flow from 10.0.0.5 transferred 850 MB without drops, while the smaller flow from 192.0.2.10 suffered significant packet loss.
 
 Implementation Note on Sampling {#sampling}
