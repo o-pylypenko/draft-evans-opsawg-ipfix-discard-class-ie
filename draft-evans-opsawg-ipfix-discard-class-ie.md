@@ -344,10 +344,10 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
 
    The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion:
 
-| src_addr   | dst_addr      | l4_dst_port | protocol | flowDiscardClass | total_pkt_drops |
-| :---       | :---          | :---        | :---     | :---             | ---:            |
-| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  | 38               |          15,400 |
-| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  | 38               |           2,100 |
+| src_addr   | dst_addr      | l4_dst_port | protocol | flowDiscardClass | total_pkt_discards |
+| :---       | :---          | :---        | :---     | :---             | ---:               |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  | 38               |             15,400 |
+| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  | 38               |              2,100 |
 
 Operational Example: Causal Flows (Congestion Drops) {#causal-flows}
 ----------------------------------------------------
