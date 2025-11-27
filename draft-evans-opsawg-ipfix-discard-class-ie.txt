@@ -434,12 +434,12 @@ Table of Contents
        flowDirection, ipVersion, addresses, ipDiffServCodePoint) for
        filtering, correlation, or redundancy.
 
-   2.  flowDiscardClass alone SHOULD be sufficient to recover the
-       discard classification (apart from the traffic-class identity
-       required for no-buffer/class above).
+   2.  flowDiscardClass alone MUST be sufficient to recover the discard
+       classification, except from the traffic-class identity required
+       for no-buffer/class above.
 
    3.  Exporters MAY continue to export forwardingStatus ([RFC7270]) in
-       parallel.  When both are present, flowDiscardClass SHOULD be
+       parallel.  When both are present, flowDiscardClass MUST be
        considered authoritative for discard classification.
 
    4.  When flow sampling is active, the presence of flowDiscardClass
