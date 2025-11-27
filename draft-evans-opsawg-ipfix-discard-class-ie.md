@@ -219,8 +219,8 @@ Implementation Requirements {#implreq}
 ### Interoperability with Existing IPFIX IEs {#impl-interop}
 
 1. Exporters and collectors MAY also use existing IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy.
-2. flowDiscardClass alone SHOULD be sufficient to recover the discard classification (apart from the traffic-class identity required for no-buffer/class above).
-3. Exporters MAY continue to export forwardingStatus ({{?RFC7270}}) in parallel. When both are present, flowDiscardClass SHOULD be considered authoritative for discard classification.
+2. flowDiscardClass alone MUST be sufficient to recover the discard classification, except from the traffic-class identity required for no-buffer/class above.
+3. Exporters MAY continue to export forwardingStatus ({{?RFC7270}}) in parallel. When both are present, flowDiscardClass MUST be considered authoritative for discard classification.
 4. When flow sampling is active, the presence of flowDiscardClass indicates at least one sampled packet matched that class.
 
 Security Considerations {#security}
