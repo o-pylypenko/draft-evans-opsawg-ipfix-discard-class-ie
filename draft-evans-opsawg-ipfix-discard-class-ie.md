@@ -123,7 +123,7 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 
    Units: none
 
-   Range: 0..39 (values from {{flowDiscardClass-table}}; other values are unassigned and MUST be treated as unknown)
+   Range: 0..38 (values from {{flowDiscardClass-table}}; other values are unassigned and MUST be treated as unknown)
 
    Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
 
@@ -216,7 +216,7 @@ Implementation Requirements {#implreq}
 ### Interoperability with Existing IPFIX IEs {#impl-interop}
 
 1. Exporters and collectors MAY also use existing IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy.
-2. flowDiscardClass alone MUST be sufficient to recover the discard classification, except from the traffic-class identity required for no-buffer/class above.
+2. flowDiscardClass alone MUST be sufficient to recover the discard classification.
 3. Exporters MAY continue to export forwardingStatus ({{?RFC7270}}) in parallel. When both are present, flowDiscardClass MUST be considered authoritative for discard classification.
 4. When flow sampling is active, the presence of flowDiscardClass indicates at least one sampled packet matched that class.
 
@@ -282,7 +282,7 @@ To correlate a discard counter anomaly with flow records, the collector must joi
 
 3. Discard Class: Match the YANG discard-class leaf with the IPFIX flowDiscardClass value.
 
-   * Note: If the drop is specific to a traffic class (e.g., no-buffer/class), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.
+   * Note: If the drop is specific to a traffic class (e.g., no-buffer), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.
 
 Analysis Strategies {#analysis-strategies}
 -------------------
@@ -291,19 +291,19 @@ Once flow records are correlated with discard counters, operators can rank or gr
 
 * Impacted analysis: Which flows suffered loss? This is determined by grouping flows by the presence of the flowDiscardClass (or summing dropped-octets/packets) to identify the symptomatic flows of the event.
 
-* Causal analysis (when meaningful): Which flows likely contributed to the interface/device condition? For congestive drops (e.g. no-buffer/class), this is determined by identifying the top senders (by total volume or rate) in the same traffic class and egress interface during the anomaly.
+* Causal analysis (when meaningful): Which flows likely contributed to the interface/device condition? For congestive discards (e.g. no-buffer), this is determined by identifying the top senders (by total volume or rate) in the same traffic class and egress interface during the anomaly.
 
 Operational Example: Impacted Flows (Congestion Drops) {#impacted-flows}
 ------------------------------------------------------
 
-Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0).
+Scenario: an anomaly is detected in no-buffer discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0).
 
 1. Signal: Interface discard counter
 
    * Time: 2025-09-18 10:00:00 – 10:01:00
    * Observation Domain: 1234
    * Interface: 10 (egress)
-   * Class: no-buffer/class (value 38; see {{flowDiscardClass-table}})
+   * Class: no-buffer (value 38; see {{flowDiscardClass-table}})
    * Queue/DSCP: 0
 
 2. Correlation: SQL Query
@@ -326,7 +326,7 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
        -- 2. Match Time Window (any overlap with counter interval)
        AND flowEnd   >= '2025-09-18 10:00:00'
        AND flowStart <= '2025-09-18 10:01:00'
-       -- 3. Match Discard Class (no-buffer/class)
+       -- 3. Match Discard Class (no-buffer)
        AND flowDiscardClass = 38
        -- 4. Match Traffic Class context (Best Effort)
        AND ipDiffServCodePoint = 0
@@ -341,10 +341,10 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
 
    The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion:
 
-| src_addr   | dst_addr      | l4_dst_port | protocol | flowDiscardClass | total_pkt_discards |
-| :---       | :---          | :---        | :---     | :---             | ---:               |
-| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  | 38               |             15,400 |
-| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  | 38               |              2,100 |
+| src_addr   | dst_addr      | l4_dst_port | protocol | total_pkt_discards |
+| :---       | :---          | :---        | :---     | ---:               |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |             15,400 |
+| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |              2,100 |
 
 Operational Example: Causal Flows (Congestion Drops) {#causal-flows}
 ----------------------------------------------------
@@ -358,7 +358,7 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
    * Time: 2025-09-18 10:00:00 – 10:01:00
    * Observation Domain: 1234
    * Interface: 10 (egress)
-   * Class: no-buffer/class (value 38)
+   * Class: no-buffer (value 38)
    * Queue/DSCP: 0
 
 2. Correlation: SQL Query
@@ -396,10 +396,10 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
 
    This query returns flows that carried the most traffic through the congested interface and queue during the interval. These high-volume flows are candidates for having contributed to the congestion. The total_drops column (if present) can still be used to see which of these heavy flows also suffered loss.
 
-| src_addr    | dst_addr      | l4_dst_port | protocol | total_bytes  | total_pkt_discards |
-| :---        | :---          | :---        | :---     | ---:         | ---:               |
-| 10.0.0.5    | 192.0.2.200   | 443         | 6 (TCP)  | 850,000,000  | 2,100              |
-| 192.0.2.10  | 198.51.100.55 | 443         | 6 (TCP)  | 15,000,000   | 15,400             |
+| src_addr    | dst_addr      | l4_dst_port | protocol | total_bytes  | total_pkts   | total_pkt_discards |
+| :---        | :---          | :---        | :---     | ---:         | ---:         | ---:               |
+| 10.0.0.5    | 192.0.2.200   | 443         | 6 (TCP)  | 850,000,000  | 1,214,285    | 2,100              |
+| 192.0.2.10  | 198.51.100.55 | 443         | 6 (TCP)  | 15,000,000   | 21,000       | 15,400             |
 
 In this example, the flow from 10.0.0.5 transferred 850 MB with limited discards, while the smaller flow from 192.0.2.10 suffered significant packet loss.
 
