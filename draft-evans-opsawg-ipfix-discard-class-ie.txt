@@ -189,7 +189,7 @@ Table of Contents
        leaves (specific reasons) and structural aggregates are assigned
        values so collectors can perform coarse or fine roll-ups.  For
        L3, structural aggregates include address-family and cast (v4/v6,
-       unicast/multicast).
+       unicast/multicast/broadcast).
 
    3.  Self-contained decoding.  The value alone carries the discard
        class.  Exporters and collectors can still use other IEs (e.g.,
@@ -219,7 +219,7 @@ Table of Contents
 
    Units: none
 
-   Range: 0..38 (values from Table 1; other values are unassigned and
+   Range: 0..39 (values from Table 1; other values are unassigned and
    MUST be treated as unknown)
 
    Reversibility: reversible (value does not change under flow reversal
@@ -256,73 +256,75 @@ Table of Contents
          +------------------------------+------------------------+
          | l3/v4/multicast              | 4                      |
          +------------------------------+------------------------+
-         | l3/v6                        | 5                      |
+         | l3/v4/broadcast              | 5                      |
          +------------------------------+------------------------+
-         | l3/v6/unicast                | 6                      |
+         | l3/v6                        | 6                      |
          +------------------------------+------------------------+
-         | l3/v6/multicast              | 7                      |
+         | l3/v6/unicast                | 7                      |
          +------------------------------+------------------------+
-         | errors                       | 8                      |
+         | l3/v6/multicast              | 8                      |
          +------------------------------+------------------------+
-         | errors/l2                    | 9                      |
+         | errors                       | 9                      |
          +------------------------------+------------------------+
-         | errors/l2/rx                 | 10                     |
+         | errors/l2                    | 10                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/crc-error       | 11                     |
+         | errors/l2/rx                 | 11                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/invalid-mac     | 12                     |
+         | errors/l2/rx/crc-error       | 12                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/invalid-vlan    | 13                     |
+         | errors/l2/rx/invalid-mac     | 13                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/invalid-frame   | 14                     |
+         | errors/l2/rx/invalid-vlan    | 14                     |
          +------------------------------+------------------------+
-         | errors/l2/tx                 | 15                     |
+         | errors/l2/rx/invalid-frame   | 15                     |
          +------------------------------+------------------------+
-         | errors/l3                    | 16                     |
+         | errors/l2/tx                 | 16                     |
          +------------------------------+------------------------+
-         | errors/l3/rx                 | 17                     |
+         | errors/l3                    | 17                     |
          +------------------------------+------------------------+
-         | errors/l3/rx/checksum-error  | 18                     |
+         | errors/l3/rx                 | 18                     |
          +------------------------------+------------------------+
-         | errors/l3/rx/mtu-exceeded    | 19                     |
+         | errors/l3/rx/checksum-error  | 19                     |
          +------------------------------+------------------------+
-         | errors/l3/rx/invalid-packet  | 20                     |
+         | errors/l3/rx/mtu-exceeded    | 20                     |
          +------------------------------+------------------------+
-         | errors/l3/ttl-expired        | 21                     |
+         | errors/l3/rx/invalid-packet  | 21                     |
          +------------------------------+------------------------+
-         | errors/l3/no-route           | 22                     |
+         | errors/l3/ttl-expired        | 22                     |
          +------------------------------+------------------------+
-         | errors/l3/invalid-sid        | 23                     |
+         | errors/l3/no-route           | 23                     |
          +------------------------------+------------------------+
-         | errors/l3/invalid-label      | 24                     |
+         | errors/l3/invalid-sid        | 24                     |
          +------------------------------+------------------------+
-         | errors/l3/tx                 | 25                     |
+         | errors/l3/invalid-label      | 25                     |
          +------------------------------+------------------------+
-         | errors/internal              | 26                     |
+         | errors/l3/tx                 | 26                     |
          +------------------------------+------------------------+
-         | errors/internal/parity-error | 27                     |
+         | errors/internal              | 27                     |
          +------------------------------+------------------------+
-         | policy                       | 28                     |
+         | errors/internal/parity-error | 28                     |
          +------------------------------+------------------------+
-         | policy/l2                    | 29                     |
+         | policy                       | 29                     |
          +------------------------------+------------------------+
-         | policy/l2/acl                | 30                     |
+         | policy/l2                    | 30                     |
          +------------------------------+------------------------+
-         | policy/l3                    | 31                     |
+         | policy/l2/acl                | 31                     |
          +------------------------------+------------------------+
-         | policy/l3/acl                | 32                     |
+         | policy/l3                    | 32                     |
          +------------------------------+------------------------+
-         | policy/l3/policer            | 33                     |
+         | policy/l3/acl                | 33                     |
          +------------------------------+------------------------+
-         | policy/l3/null-route         | 34                     |
+         | policy/l3/policer            | 34                     |
          +------------------------------+------------------------+
-         | policy/l3/rpf                | 35                     |
+         | policy/l3/null-route         | 35                     |
          +------------------------------+------------------------+
-         | policy/l3/ddos               | 36                     |
+         | policy/l3/rpf                | 36                     |
          +------------------------------+------------------------+
-         | no-buffer                    | 37                     |
+         | policy/l3/ddos               | 37                     |
          +------------------------------+------------------------+
-         | no-buffer/class              | 38                     |
+         | no-buffer                    | 38                     |
+         +------------------------------+------------------------+
+         | no-buffer/class              | 39                     |
          +------------------------------+------------------------+
 
               Table 1: Flow discard classification values and
@@ -649,7 +651,7 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
        interface) AND egressInterface = 10 -- 2.  Match Time Window (any
        overlap with counter interval) AND flowEnd >= '2025-09-18
        10:00:00' AND flowStart <= '2025-09-18 10:01:00' -- 3.  Match
-       Discard Class (no-buffer/class) AND flowDiscardClass = 38 -- 4.
+       Discard Class (no-buffer/class) AND flowDiscardClass = 39 -- 4.
        Match Traffic Class context (Best Effort) AND ipDiffServCodePoint
        = 0 GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
        total_pkt_discards DESC LIMIT 10;
@@ -696,7 +698,7 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
        The operator queries the IPFIX store to perform a causal analysis
        by ranking flows by total traffic volume in the same time window,
        interface, and traffic class.  The query does not require
-       flowDiscardClass = 38, since flows can contribute to congestion
+       flowDiscardClass = 39, since flows can contribute to congestion
        even if only some packets (or none of the sampled packets) were
        dropped.
 
