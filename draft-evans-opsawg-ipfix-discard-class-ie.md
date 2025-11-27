@@ -183,10 +183,9 @@ The code points for flowDiscardClass are maintained by IANA in the "flowDiscardC
 | policy/l3/rpf                         |  36    |
 | policy/l3/ddos                        |  37    |
 | no-buffer                             |  38    |
-| no-buffer/class                       |  39    |
 {: #flowDiscardClass-table title="Flow discard classification values and corresponding discard classes"}
 
-no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the appropriate companion IE in the same record.
+For discard classes where per-traffic-class granularity is operationally significant (e.g., no-buffer, policy/l3/policer), the traffic class SHOULD be conveyed via companion IEs in the same Flow Record (e.g., ipDiffServCodePoint for L3, dot1qPriority for L2). This enables correlation with per-class interface counters from {{!I-D.ietf-opsawg-discardmodel}}.
 
 Implementation Requirements {#implreq}
 ---------------------------
@@ -203,17 +202,15 @@ Implementation Requirements {#implreq}
 1. Cardinality. A Flow Record MUST contain at most one instance of flowDiscardClass.
 2. Multiplicity.  When multiple discard reasons apply to the same flow interval, exporters MUST export multiple Flow Records, one per discard reason.  Each Flow Record MUST carry the same flow keys (5-tuple, interfaces, timestamps) but a distinct flowDiscardClass value.  Where possible, exporters SHOULD include per-reason droppedPacketDeltaCount and/or droppedOctetDeltaCount to quantify the volume attributed to each specific discard class.
    * While this approach creates multiple Flow Records for the same flow 5-tuple, it provides crucial diagnostic granularity.  Collectors can easily aggregate by summing dropped counts across records with the same flow keys, while preserving the ability to attribute loss to specific root causes.  This design maintains full fidelity of per-reason discard statistics.
-4. Specificity. Exporters SHOULD report the most-specific known class (a leaf). If the specific leaf is unknown, an appropriate parent/aggregate MAY be used.
-5. Interval semantics.  When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class.  Exporters MUST include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the volume attributed to that specific discard reason.  When multiple discard reasons affect the same flow (per point 2), the sum of per-reason dropped counts across all records for that flow represents the total flow-level discards.
-6. Congestive loss traffic class (no-buffer/class).
-   * If flowDiscardClass equals no-buffer/class, the traffic-class identifier used by the queueing system MUST be present in the same record, carried in exactly one suitable IE (e.g., ipDiffServCodePoint or ipClassOfService for L3, or dot1qPriority for L2).
-   * If classification occurs after remarking, exporters MUST use the corresponding post-class IE where available, or provide a device queue-ID→class mapping via IPFIX Options data.
-7. Context (recommended). To aid correlation with interface/device/control-plane counters, exporters SHOULD include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
+3. Specificity. Exporters SHOULD report the most-specific known class (a leaf). If the specific leaf is unknown, an appropriate parent/aggregate MAY be used.
+4. Interval semantics.  When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class.  Exporters MUST include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the volume attributed to that specific discard reason.  When multiple discard reasons affect the same flow (per point 2), the sum of per-reason dropped counts across all records for that flow represents the total flow-level discards.
+5. Traffic class context. For discard classes where per-class correlation is operationally significant (e.g., no-buffer, policy/l3/policer), exporters SHOULD include a traffic-class IE in the same record (e.g., ipDiffServCodePoint or ipClassOfService for L3, dot1qPriority for L2). If classification occurs after remarking, exporters SHOULD use the post-remark class, or provide a device queue-ID→class mapping via IPFIX Options data.
+6. Context. To aid correlation with interface/device/control-plane counters, exporters SHOULD include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
 
 ### Collector Requirements {#impl-collector}
 1. Multiple records per flow.  When multiple Flow Records carry different flowDiscardClass values for the same flow keys and overlapping time intervals, collectors MUST treat them as indicating distinct discard reasons affecting the same flow. Collectors SHOULD aggregate these records when computing per-flow total discards, while preserving per-reason breakdowns for root cause analysis.
 2. Aggregate handling. When a parent/aggregate class is received, collectors MUST treat it as a coarse classification that may encompass multiple leaves.
-3. Congestive loss traffic class. For no-buffer/class, when a traffic-class IE is present, collectors MUST use it to align with per-class counters; if absent, collectors MAY apply local device mappings if available.
+3. Traffic class correlation. When a traffic-class IE is present alongside no-buffer or policy/l3/policer, collectors SHOULD use it to correlate with per-class interface counters. If absent, collectors MAY apply local device mappings if available.
 4. Unknown values. Collectors MUST handle unknown/unassigned values gracefully (e.g., categorize as “unknown”) without rejecting the record.
 
 ### Interoperability with Existing IPFIX IEs {#impl-interop}
@@ -330,7 +327,7 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
        AND flowEnd   >= '2025-09-18 10:00:00'
        AND flowStart <= '2025-09-18 10:01:00'
        -- 3. Match Discard Class (no-buffer/class)
-       AND flowDiscardClass = 39
+       AND flowDiscardClass = 38
        -- 4. Match Traffic Class context (Best Effort)
        AND ipDiffServCodePoint = 0
    GROUP BY
@@ -366,7 +363,7 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
 
 2. Correlation: SQL Query
 
-   The operator queries the IPFIX store to perform a causal analysis by ranking flows by total traffic volume in the same time window, interface, and traffic class. The query does not require flowDiscardClass = 39, since flows can contribute to congestion even if only some packets (or none of the sampled packets) were dropped.
+   The operator queries the IPFIX store to perform a causal analysis by ranking flows by total traffic volume in the same time window, interface, and traffic class. The query does not require flowDiscardClass = 38, since flows can contribute to congestion even if only some packets (or none of the sampled packets) were dropped.
 
    ```sql
    SELECT
