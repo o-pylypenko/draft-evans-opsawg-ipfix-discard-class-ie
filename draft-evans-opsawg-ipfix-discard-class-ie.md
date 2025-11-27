@@ -100,7 +100,7 @@ The mapping between {{!I-D.ietf-opsawg-discardmodel}} and the IPFIX flowDiscardC
 
 1. Scope. The flowDiscardClass Information Element is specifically for reporting flow-level discard reasons, and therefore only represents the flow subtree from {{!I-D.ietf-opsawg-discardmodel}}. The component is implicitly "flow" and the type is implicitly "discards"; interface, device, and control-plane components are out of scope for this IE.
 
-2. Hierarchy preserved. The enumeration mirrors the model: both leaves (specific reasons) and structural aggregates are assigned values so collectors can perform coarse or fine roll-ups. For L3, structural aggregates include address-family and cast (v4/v6, unicast/multicast).
+2. Hierarchy preserved. The enumeration mirrors the model: both leaves (specific reasons) and structural aggregates are assigned values so collectors can perform coarse or fine roll-ups. For L3, structural aggregates include address-family and cast (v4/v6, unicast/multicast/broadcast).
 
 3. Self-contained decoding. The value alone carries the discard class. Exporters and collectors can still use other IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for correlation, but they are not required to decode the class.
 
@@ -123,7 +123,7 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 
    Units: none
 
-   Range: 0..38 (values from {{flowDiscardClass-table}}; other values are unassigned and MUST be treated as unknown)
+   Range: 0..39 (values from {{flowDiscardClass-table}}; other values are unassigned and MUST be treated as unknown)
 
    Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
 
@@ -142,7 +142,6 @@ flowDiscardClass Values  {#flowDiscardClass-values}
 
 The code points for flowDiscardClass are maintained by IANA in the "flowDiscardClass Values" subregistry of the IPFIX registry.  Future additions or changes are managed via Expert Review as described in {{iana}}.
 
-
 | Discard Class                  | flowDiscardClass Value |
 |:-------------------------------|:-----------------------|
 | l2                                    |  0     |
@@ -150,40 +149,41 @@ The code points for flowDiscardClass are maintained by IANA in the "flowDiscardC
 | l3/v4                                 |  2     |
 | l3/v4/unicast                         |  3     |
 | l3/v4/multicast                       |  4     |
-| l3/v6                                 |  5     |
-| l3/v6/unicast                         |  6     |
-| l3/v6/multicast                       |  7     |
-| errors                                |  8     |
-| errors/l2                             |  9     |
-| errors/l2/rx                          |  10     |
-| errors/l2/rx/crc-error                |  11     |
-| errors/l2/rx/invalid-mac              |  12     |
-| errors/l2/rx/invalid-vlan             |  13     |
-| errors/l2/rx/invalid-frame            |  14     |
-| errors/l2/tx                          |  15     |
-| errors/l3                             |  16     |
-| errors/l3/rx                          |  17     |
-| errors/l3/rx/checksum-error           |  18     |
-| errors/l3/rx/mtu-exceeded             |  19     |
-| errors/l3/rx/invalid-packet           |  20     |
-| errors/l3/ttl-expired                 |  21     |
-| errors/l3/no-route                    |  22     |
-| errors/l3/invalid-sid                 |  23     |
-| errors/l3/invalid-label               |  24     |
-| errors/l3/tx                          |  25     |
-| errors/internal                       |  26     |
-| errors/internal/parity-error          |  27     |
-| policy                                |  28     |
-| policy/l2                             |  29     |
-| policy/l2/acl                         |  30     |
-| policy/l3                             |  31     |
-| policy/l3/acl                         |  32     |
-| policy/l3/policer                     |  33     |
-| policy/l3/null-route                  |  34     |
-| policy/l3/rpf                         |  35     |
-| policy/l3/ddos                        |  36     |
-| no-buffer                             |  37     |
-| no-buffer/class                       |  38      |
+| l3/v4/broadcast                       |  5     |
+| l3/v6                                 |  6     |
+| l3/v6/unicast                         |  7     |
+| l3/v6/multicast                       |  8     |
+| errors                                |  9     |
+| errors/l2                             |  10    |
+| errors/l2/rx                          |  11    |
+| errors/l2/rx/crc-error                |  12    |
+| errors/l2/rx/invalid-mac              |  13    |
+| errors/l2/rx/invalid-vlan             |  14    |
+| errors/l2/rx/invalid-frame            |  15    |
+| errors/l2/tx                          |  16    |
+| errors/l3                             |  17    |
+| errors/l3/rx                          |  18    |
+| errors/l3/rx/checksum-error           |  19    |
+| errors/l3/rx/mtu-exceeded             |  20    |
+| errors/l3/rx/invalid-packet           |  21    |
+| errors/l3/ttl-expired                 |  22    |
+| errors/l3/no-route                    |  23    |
+| errors/l3/invalid-sid                 |  24    |
+| errors/l3/invalid-label               |  25    |
+| errors/l3/tx                          |  26    |
+| errors/internal                       |  27    |
+| errors/internal/parity-error          |  28    |
+| policy                                |  29    |
+| policy/l2                             |  30    |
+| policy/l2/acl                         |  31    |
+| policy/l3                             |  32    |
+| policy/l3/acl                         |  33    |
+| policy/l3/policer                     |  34    |
+| policy/l3/null-route                  |  35    |
+| policy/l3/rpf                         |  36    |
+| policy/l3/ddos                        |  37    |
+| no-buffer                             |  38    |
+| no-buffer/class                       |  39    |
 {: #flowDiscardClass-table title="Flow discard classification values and corresponding discard classes"}
 
 no-buffer/class conveys per-QoS class congestion loss; the specific class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the appropriate companion IE in the same record.
@@ -330,7 +330,7 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
        AND flowEnd   >= '2025-09-18 10:00:00'
        AND flowStart <= '2025-09-18 10:01:00'
        -- 3. Match Discard Class (no-buffer/class)
-       AND flowDiscardClass = 38
+       AND flowDiscardClass = 39
        -- 4. Match Traffic Class context (Best Effort)
        AND ipDiffServCodePoint = 0
    GROUP BY
@@ -366,7 +366,7 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
 
 2. Correlation: SQL Query
 
-   The operator queries the IPFIX store to perform a causal analysis by ranking flows by total traffic volume in the same time window, interface, and traffic class. The query does not require flowDiscardClass = 38, since flows can contribute to congestion even if only some packets (or none of the sampled packets) were dropped.
+   The operator queries the IPFIX store to perform a causal analysis by ranking flows by total traffic volume in the same time window, interface, and traffic class. The query does not require flowDiscardClass = 39, since flows can contribute to congestion even if only some packets (or none of the sampled packets) were dropped.
 
    ```sql
    SELECT
