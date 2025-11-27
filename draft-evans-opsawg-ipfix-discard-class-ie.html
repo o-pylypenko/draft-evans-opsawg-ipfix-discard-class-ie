@@ -1849,14 +1849,14 @@ successor). Existing code points <span class="bcp14">MUST NOT</span> be repurpos
           <li id="appendix-A.3-2.2">
             <p id="appendix-A.3-2.2.1">Correlation: SQL Query<a href="#appendix-A.3-2.2.1" class="pilcrow">¶</a></p>
 <p id="appendix-A.3-2.2.2">
-The operator queries the IPFIX store to perform impact analysis — identifying symptomatic flows of the congestion event.<a href="#appendix-A.3-2.2.2" class="pilcrow">¶</a></p>
+The operator queries the IPFIX store to perform impact analysis — identifying symptomatic flows of the congestion event:<a href="#appendix-A.3-2.2.2" class="pilcrow">¶</a></p>
 <p id="appendix-A.3-2.2.3"><code>sql
 SELECT
     src_addr,
     dst_addr,
     l4_dst_port,
     protocol,
-    SUM(droppedPacketDeltaCount) AS total_drops
+    SUM(droppedPacketDeltaCount) AS total_pkt_discards
 FROM flow_records
 WHERE
     -- 0. Match Observation Domain
@@ -1873,14 +1873,14 @@ WHERE
 GROUP BY
     src_addr, dst_addr, l4_dst_port, protocol
 ORDER BY
-    total_drops DESC
+    total_pkt_discards DESC
 LIMIT 10;
 </code><a href="#appendix-A.3-2.2.3" class="pilcrow">¶</a></p>
 </li>
           <li id="appendix-A.3-2.3">
             <p id="appendix-A.3-2.3.1">Result<a href="#appendix-A.3-2.3.1" class="pilcrow">¶</a></p>
 <p id="appendix-A.3-2.3.2">
-The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion.<a href="#appendix-A.3-2.3.2" class="pilcrow">¶</a></p>
+The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion:<a href="#appendix-A.3-2.3.2" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <table class="center" id="table-2">
@@ -1891,7 +1891,8 @@ The query returns the top flows most affected by the discard event, allowing the
               <th class="text-left" rowspan="1" colspan="1">dst_addr</th>
               <th class="text-left" rowspan="1" colspan="1">l4_dst_port</th>
               <th class="text-left" rowspan="1" colspan="1">protocol</th>
-              <th class="text-right" rowspan="1" colspan="1">total_drops</th>
+              <th class="text-left" rowspan="1" colspan="1">flowDiscardClass</th>
+              <th class="text-right" rowspan="1" colspan="1">total_pkt_drops</th>
             </tr>
           </thead>
           <tbody>
@@ -1900,14 +1901,16 @@ The query returns the top flows most affected by the discard event, allowing the
               <td class="text-left" rowspan="1" colspan="1">198.51.100.55</td>
               <td class="text-left" rowspan="1" colspan="1">443</td>
               <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
-              <td class="text-right" rowspan="1" colspan="1">15400</td>
+              <td class="text-left" rowspan="1" colspan="1">38</td>
+              <td class="text-right" rowspan="1" colspan="1">15,400</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">192.0.2.12</td>
               <td class="text-left" rowspan="1" colspan="1">198.51.100.80</td>
               <td class="text-left" rowspan="1" colspan="1">80</td>
               <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
-              <td class="text-right" rowspan="1" colspan="1">2100</td>
+              <td class="text-left" rowspan="1" colspan="1">38</td>
+              <td class="text-right" rowspan="1" colspan="1">2,100</td>
             </tr>
           </tbody>
         </table>
@@ -1953,8 +1956,8 @@ SELECT
     l4_dst_port,
     protocol,
     SUM(octetDeltaCount)          AS total_bytes,
-    SUM(packetDeltaCount)         AS total_packets,
-    SUM(droppedPacketDeltaCount)  AS total_drops
+    SUM(packetDeltaCount)         AS total_pkts,
+    SUM(droppedPacketDeltaCount)  AS total_pkt_discards
 FROM flow_records
 WHERE
     -- 0. Match Observation Domain
@@ -1986,8 +1989,9 @@ This query returns flows that carried the most traffic through the congested int
               <th class="text-left" rowspan="1" colspan="1">src_addr</th>
               <th class="text-left" rowspan="1" colspan="1">dst_addr</th>
               <th class="text-left" rowspan="1" colspan="1">l4_dst_port</th>
-              <th class="text-left" rowspan="1" colspan="1">total_bytes</th>
-              <th class="text-left" rowspan="1" colspan="1">total_drops</th>
+              <th class="text-left" rowspan="1" colspan="1">protocol</th>
+              <th class="text-right" rowspan="1" colspan="1">total_bytes</th>
+              <th class="text-right" rowspan="1" colspan="1">total_pkt_discards</th>
             </tr>
           </thead>
           <tbody>
@@ -1995,19 +1999,21 @@ This query returns flows that carried the most traffic through the congested int
               <td class="text-left" rowspan="1" colspan="1">10.0.0.5</td>
               <td class="text-left" rowspan="1" colspan="1">192.0.2.200</td>
               <td class="text-left" rowspan="1" colspan="1">443</td>
-              <td class="text-left" rowspan="1" colspan="1">850 MB</td>
-              <td class="text-left" rowspan="1" colspan="1">0</td>
+              <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
+              <td class="text-right" rowspan="1" colspan="1">850,000,000</td>
+              <td class="text-right" rowspan="1" colspan="1">2,100</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">192.0.2.10</td>
               <td class="text-left" rowspan="1" colspan="1">198.51.100.55</td>
               <td class="text-left" rowspan="1" colspan="1">443</td>
-              <td class="text-left" rowspan="1" colspan="1">15 MB</td>
-              <td class="text-left" rowspan="1" colspan="1">15,400</td>
+              <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
+              <td class="text-right" rowspan="1" colspan="1">15,000,000</td>
+              <td class="text-right" rowspan="1" colspan="1">15,400</td>
             </tr>
           </tbody>
         </table>
-<p id="appendix-A.4-4">In this example, the flow from 10.0.0.5 transferred 850 MB without drops, while the smaller flow from 192.0.2.10 suffered significant packet loss.<a href="#appendix-A.4-4" class="pilcrow">¶</a></p>
+<p id="appendix-A.4-4">In this example, the flow from 10.0.0.5 transferred 850 MB with limited discards, while the smaller flow from 192.0.2.10 suffered significant packet loss.<a href="#appendix-A.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sampling">
@@ -2022,8 +2028,7 @@ This query returns flows that carried the most traffic through the congested int
 <p id="appendix-A.5-3">The sampling-rate multiplier is N.  Estimated totals are then:
    * estimated_total_dropped_packets  = droppedPacketDeltaCount * N
    * estimated_total_dropped_octets   = droppedOctetDeltaCount  * N<a href="#appendix-A.5-3" class="pilcrow">¶</a></p>
-<p id="appendix-A.5-4">For example:
-If the exporter samples 1 in every 100 packets, the multiplier is 100.  If the exporter samples 1 in every 1000 packets, the multiplier is 1000.<a href="#appendix-A.5-4" class="pilcrow">¶</a></p>
+<p id="appendix-A.5-4">For example, if the exporter samples 1 in every 100 packets, the multiplier is 100.  If the exporter samples 1 in every 1000 packets, the multiplier is 1000.<a href="#appendix-A.5-4" class="pilcrow">¶</a></p>
 <p id="appendix-A.5-5">Exporters typically report their sampling configuration via IPFIX (samplingInterval and/or samplingProbability).  Because sampling is probabilistic, these estimates are approximate; using larger time windows and higher-volume aggregates tends to make them more robust.<a href="#appendix-A.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>

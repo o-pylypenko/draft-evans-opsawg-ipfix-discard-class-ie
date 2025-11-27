@@ -640,32 +640,33 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
    2.  Correlation: SQL Query
 
        The operator queries the IPFIX store to perform impact analysis —
-       identifying symptomatic flows of the congestion event.
+       identifying symptomatic flows of the congestion event:
 
        sql SELECT src_addr, dst_addr, l4_dst_port, protocol,
-       SUM(droppedPacketDeltaCount) AS total_drops FROM flow_records
-       WHERE -- 0.  Match Observation Domain observationDomainId = 1234
-       -- 1.  Match Location (egress interface) AND egressInterface = 10
-       -- 2.  Match Time Window (any overlap with counter interval) AND
-       flowEnd >= '2025-09-18 10:00:00' AND flowStart <= '2025-09-18
-       10:01:00' -- 3.  Match Discard Class (no-buffer/class) AND
-       flowDiscardClass = 38 -- 4.  Match Traffic Class context (Best
-       Effort) AND ipDiffServCodePoint = 0 GROUP BY src_addr, dst_addr,
-       l4_dst_port, protocol ORDER BY total_drops DESC LIMIT 10;
+       SUM(droppedPacketDeltaCount) AS total_pkt_discards FROM
+       flow_records WHERE -- 0.  Match Observation Domain
+       observationDomainId = 1234 -- 1.  Match Location (egress
+       interface) AND egressInterface = 10 -- 2.  Match Time Window (any
+       overlap with counter interval) AND flowEnd >= '2025-09-18
+       10:00:00' AND flowStart <= '2025-09-18 10:01:00' -- 3.  Match
+       Discard Class (no-buffer/class) AND flowDiscardClass = 38 -- 4.
+       Match Traffic Class context (Best Effort) AND ipDiffServCodePoint
+       = 0 GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
+       total_pkt_discards DESC LIMIT 10;
 
    3.  Result
 
        The query returns the top flows most affected by the discard
        event, allowing the operator to pinpoint specific applications or
-       users impacted by the congestion.
+       users impacted by the congestion:
 
-    +============+===============+=============+========+=============+
-    | src_addr   | dst_addr      | l4_dst_port |protocol| total_drops |
-    +============+===============+=============+========+=============+
-    | 192.0.2.10 | 198.51.100.55 | 443         |6 (TCP) |       15400 |
-    +------------+---------------+-------------+--------+-------------+
-    | 192.0.2.12 | 198.51.100.80 | 80          |6 (TCP) |        2100 |
-    +------------+---------------+-------------+--------+-------------+
+   +==========+=============+===========+========+================+===============+
+   |src_addr  |dst_addr     |l4_dst_port|protocol|flowDiscardClass|total_pkt_drops|
+   +==========+=============+===========+========+================+===============+
+   |192.0.2.10|198.51.100.55|443        |6 (TCP) |38              |         15,400|
+   +----------+-------------+-----------+--------+----------------+---------------+
+   |192.0.2.12|198.51.100.80|80         |6 (TCP) |38              |          2,100|
+   +----------+-------------+-----------+--------+----------------+---------------+
 
                                   Table 2
 
@@ -701,8 +702,8 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
 
        sql SELECT src_addr, dst_addr, l4_dst_port, protocol,
        SUM(octetDeltaCount) AS total_bytes, SUM(packetDeltaCount) AS
-       total_packets, SUM(droppedPacketDeltaCount) AS total_drops FROM
-       flow_records WHERE -- 0.  Match Observation Domain
+       total_pkts, SUM(droppedPacketDeltaCount) AS total_pkt_discards
+       FROM flow_records WHERE -- 0.  Match Observation Domain
        observationDomainId = 1234 -- 1.  Match Location (egress
        interface) AND egressInterface = 10 -- 2.  Match Time Window (any
        overlap with counter interval) AND flowEnd >= '2025-09-18
@@ -719,19 +720,19 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
        congestion.  The total_drops column (if present) can still be
        used to see which of these heavy flows also suffered loss.
 
-   +==========+===============+===========+=============+=============+
-   |src_addr  | dst_addr      |l4_dst_port| total_bytes | total_drops |
-   +==========+===============+===========+=============+=============+
-   |10.0.0.5  | 192.0.2.200   |443        | 850 MB      | 0           |
-   +----------+---------------+-----------+-------------+-------------+
-   |192.0.2.10| 198.51.100.55 |443        | 15 MB       | 15,400      |
-   +----------+---------------+-----------+-------------+-------------+
+   +==========+=============+===========+========+===========+==================+
+   |src_addr  |dst_addr     |l4_dst_port|protocol|total_bytes|total_pkt_discards|
+   +==========+=============+===========+========+===========+==================+
+   |10.0.0.5  |192.0.2.200  |443        |6 (TCP) |850,000,000|             2,100|
+   +----------+-------------+-----------+--------+-----------+------------------+
+   |192.0.2.10|198.51.100.55|443        |6 (TCP) | 15,000,000|            15,400|
+   +----------+-------------+-----------+--------+-----------+------------------+
 
-                                 Table 3
+                                  Table 3
 
-   In this example, the flow from 10.0.0.5 transferred 850 MB without
-   drops, while the smaller flow from 192.0.2.10 suffered significant
-   packet loss.
+   In this example, the flow from 10.0.0.5 transferred 850 MB with
+   limited discards, while the smaller flow from 192.0.2.10 suffered
+   significant packet loss.
 
 A.5.  Implementation Note on Sampling
 
@@ -750,7 +751,7 @@ A.5.  Implementation Note on Sampling
    estimated_total_dropped_packets = droppedPacketDeltaCount * N *
    estimated_total_dropped_octets = droppedOctetDeltaCount * N
 
-   For example: If the exporter samples 1 in every 100 packets, the
+   For example, if the exporter samples 1 in every 100 packets, the
    multiplier is 100.  If the exporter samples 1 in every 1000 packets,
    the multiplier is 1000.
 
