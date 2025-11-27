@@ -1310,7 +1310,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-3.2-3">Abstract Data Type: unsigned8<a href="#section-3.2-3" class="pilcrow">¶</a></p>
 <p id="section-3.2-4">Data Type Semantics: identifier<a href="#section-3.2-4" class="pilcrow">¶</a></p>
 <p id="section-3.2-5">Units: none<a href="#section-3.2-5" class="pilcrow">¶</a></p>
-<p id="section-3.2-6">Range: 0..39 (values from <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>; other values are unassigned and <span class="bcp14">MUST</span> be treated as unknown)<a href="#section-3.2-6" class="pilcrow">¶</a></p>
+<p id="section-3.2-6">Range: 0..38 (values from <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>; other values are unassigned and <span class="bcp14">MUST</span> be treated as unknown)<a href="#section-3.2-6" class="pilcrow">¶</a></p>
 <p id="section-3.2-7">Reversibility: reversible (value does not change under flow reversal as per <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>)<a href="#section-3.2-7" class="pilcrow">¶</a></p>
 <p id="section-3.2-8">Status: current<a href="#section-3.2-8" class="pilcrow">¶</a></p>
 <p id="section-3.2-9">ElementId: TBD<a href="#section-3.2-9" class="pilcrow">¶</a></p>
@@ -1588,7 +1588,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-3.4.4-1.1.1">Exporters and collectors <span class="bcp14">MAY</span> also use existing IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy.<a href="#section-3.4.4-1.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-3.4.4-1.2">
-              <p id="section-3.4.4-1.2.1">flowDiscardClass alone <span class="bcp14">MUST</span> be sufficient to recover the discard classification, except from the traffic-class identity required for no-buffer/class above.<a href="#section-3.4.4-1.2.1" class="pilcrow">¶</a></p>
+              <p id="section-3.4.4-1.2.1">flowDiscardClass alone <span class="bcp14">MUST</span> be sufficient to recover the discard classification.<a href="#section-3.4.4-1.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-3.4.4-1.3">
               <p id="section-3.4.4-1.3.1">Exporters <span class="bcp14">MAY</span> continue to export forwardingStatus (<span>[<a href="#RFC7270" class="cite xref">RFC7270</a>]</span>) in parallel. When both are present, flowDiscardClass <span class="bcp14">MUST</span> be considered authoritative for discard classification.<a href="#section-3.4.4-1.3.1" class="pilcrow">¶</a></p>
@@ -1788,7 +1788,7 @@ successor). Existing code points <span class="bcp14">MUST NOT</span> be repurpos
             <p id="appendix-A.1-2.3.1">Discard Class: Match the YANG discard-class leaf with the IPFIX flowDiscardClass value.<a href="#appendix-A.1-2.3.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.1-2.3.2.1">
-                <p id="appendix-A.1-2.3.2.1.1">Note: If the drop is specific to a traffic class (e.g., no-buffer/class), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.<a href="#appendix-A.1-2.3.2.1.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.1-2.3.2.1.1">Note: If the drop is specific to a traffic class (e.g., no-buffer), the collector must also match the traffic class identifier (e.g., ipDiffServCodePoint) to the specific queue experiencing loss.<a href="#appendix-A.1-2.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
@@ -1806,7 +1806,7 @@ successor). Existing code points <span class="bcp14">MUST NOT</span> be repurpos
             <p id="appendix-A.2-2.1.1">Impacted analysis: Which flows suffered loss? This is determined by grouping flows by the presence of the flowDiscardClass (or summing dropped-octets/packets) to identify the symptomatic flows of the event.<a href="#appendix-A.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.2-2.2">
-            <p id="appendix-A.2-2.2.1">Causal analysis (when meaningful): Which flows likely contributed to the interface/device condition? For congestive drops (e.g. no-buffer/class), this is determined by identifying the top senders (by total volume or rate) in the same traffic class and egress interface during the anomaly.<a href="#appendix-A.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.2-2.2.1">Causal analysis (when meaningful): Which flows likely contributed to the interface/device condition? For congestive discards (e.g. no-buffer), this is determined by identifying the top senders (by total volume or rate) in the same traffic class and egress interface during the anomaly.<a href="#appendix-A.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1816,7 +1816,7 @@ successor). Existing code points <span class="bcp14">MUST NOT</span> be repurpos
         <h3 id="name-operational-example-impacte">
 <a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-operational-example-impacte" class="section-name selfRef">Operational Example: Impacted Flows (Congestion Drops)</a>
         </h3>
-<p id="appendix-A.3-1">Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0).<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-1">Scenario: an anomaly is detected in no-buffer discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0).<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="appendix-A.3-2">
 <li id="appendix-A.3-2.1">
             <p id="appendix-A.3-2.1.1">Signal: Interface discard counter<a href="#appendix-A.3-2.1.1" class="pilcrow">¶</a></p>
@@ -1831,7 +1831,7 @@ successor). Existing code points <span class="bcp14">MUST NOT</span> be repurpos
                 <p id="appendix-A.3-2.1.2.3.1">Interface: 10 (egress)<a href="#appendix-A.3-2.1.2.3.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.3-2.1.2.4">
-                <p id="appendix-A.3-2.1.2.4.1">Class: no-buffer/class (value 38; see <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>)<a href="#appendix-A.3-2.1.2.4.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.3-2.1.2.4.1">Class: no-buffer (value 38; see <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>)<a href="#appendix-A.3-2.1.2.4.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.3-2.1.2.5">
                 <p id="appendix-A.3-2.1.2.5.1">Queue/DSCP: 0<a href="#appendix-A.3-2.1.2.5.1" class="pilcrow">¶</a></p>
@@ -1858,7 +1858,7 @@ WHERE
     -- 2. Match Time Window (any overlap with counter interval)
     AND flowEnd   &gt;= '2025-09-18 10:00:00'
     AND flowStart &lt;= '2025-09-18 10:01:00'
-    -- 3. Match Discard Class (no-buffer/class)
+    -- 3. Match Discard Class (no-buffer)
     AND flowDiscardClass = 38
     -- 4. Match Traffic Class context (Best Effort)
     AND ipDiffServCodePoint = 0
@@ -1883,7 +1883,6 @@ The query returns the top flows most affected by the discard event, allowing the
               <th class="text-left" rowspan="1" colspan="1">dst_addr</th>
               <th class="text-left" rowspan="1" colspan="1">l4_dst_port</th>
               <th class="text-left" rowspan="1" colspan="1">protocol</th>
-              <th class="text-left" rowspan="1" colspan="1">flowDiscardClass</th>
               <th class="text-right" rowspan="1" colspan="1">total_pkt_discards</th>
             </tr>
           </thead>
@@ -1893,7 +1892,6 @@ The query returns the top flows most affected by the discard event, allowing the
               <td class="text-left" rowspan="1" colspan="1">198.51.100.55</td>
               <td class="text-left" rowspan="1" colspan="1">443</td>
               <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
-              <td class="text-left" rowspan="1" colspan="1">38</td>
               <td class="text-right" rowspan="1" colspan="1">15,400</td>
             </tr>
             <tr>
@@ -1901,7 +1899,6 @@ The query returns the top flows most affected by the discard event, allowing the
               <td class="text-left" rowspan="1" colspan="1">198.51.100.80</td>
               <td class="text-left" rowspan="1" colspan="1">80</td>
               <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
-              <td class="text-left" rowspan="1" colspan="1">38</td>
               <td class="text-right" rowspan="1" colspan="1">2,100</td>
             </tr>
           </tbody>
@@ -1930,7 +1927,7 @@ Same as in Section A.3:<a href="#appendix-A.4-2.1.2" class="pilcrow">¶</a></p>
                 <p id="appendix-A.4-2.1.3.3.1">Interface: 10 (egress)<a href="#appendix-A.4-2.1.3.3.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.4-2.1.3.4">
-                <p id="appendix-A.4-2.1.3.4.1">Class: no-buffer/class (value 38)<a href="#appendix-A.4-2.1.3.4.1" class="pilcrow">¶</a></p>
+                <p id="appendix-A.4-2.1.3.4.1">Class: no-buffer (value 38)<a href="#appendix-A.4-2.1.3.4.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-A.4-2.1.3.5">
                 <p id="appendix-A.4-2.1.3.5.1">Queue/DSCP: 0<a href="#appendix-A.4-2.1.3.5.1" class="pilcrow">¶</a></p>
@@ -1983,6 +1980,7 @@ This query returns flows that carried the most traffic through the congested int
               <th class="text-left" rowspan="1" colspan="1">l4_dst_port</th>
               <th class="text-left" rowspan="1" colspan="1">protocol</th>
               <th class="text-right" rowspan="1" colspan="1">total_bytes</th>
+              <th class="text-right" rowspan="1" colspan="1">total_pkts</th>
               <th class="text-right" rowspan="1" colspan="1">total_pkt_discards</th>
             </tr>
           </thead>
@@ -1993,6 +1991,7 @@ This query returns flows that carried the most traffic through the congested int
               <td class="text-left" rowspan="1" colspan="1">443</td>
               <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
               <td class="text-right" rowspan="1" colspan="1">850,000,000</td>
+              <td class="text-right" rowspan="1" colspan="1">1,214,285</td>
               <td class="text-right" rowspan="1" colspan="1">2,100</td>
             </tr>
             <tr>
@@ -2001,6 +2000,7 @@ This query returns flows that carried the most traffic through the congested int
               <td class="text-left" rowspan="1" colspan="1">443</td>
               <td class="text-left" rowspan="1" colspan="1">6 (TCP)</td>
               <td class="text-right" rowspan="1" colspan="1">15,000,000</td>
+              <td class="text-right" rowspan="1" colspan="1">21,000</td>
               <td class="text-right" rowspan="1" colspan="1">15,400</td>
             </tr>
           </tbody>

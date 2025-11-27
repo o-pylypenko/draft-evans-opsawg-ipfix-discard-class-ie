@@ -219,7 +219,7 @@ Table of Contents
 
    Units: none
 
-   Range: 0..39 (values from Table 1; other values are unassigned and
+   Range: 0..38 (values from Table 1; other values are unassigned and
    MUST be treated as unknown)
 
    Reversibility: reversible (value does not change under flow reversal
@@ -435,8 +435,7 @@ Table of Contents
        filtering, correlation, or redundancy.
 
    2.  flowDiscardClass alone MUST be sufficient to recover the discard
-       classification, except from the traffic-class identity required
-       for no-buffer/class above.
+       classification.
 
    3.  Exporters MAY continue to export forwardingStatus ([RFC7270]) in
        parallel.  When both are present, flowDiscardClass MUST be
@@ -598,7 +597,7 @@ A.1.  Correlation Keys
        flowDiscardClass value.
 
        *  Note: If the drop is specific to a traffic class (e.g., no-
-          buffer/class), the collector must also match the traffic class
+          buffer), the collector must also match the traffic class
           identifier (e.g., ipDiffServCodePoint) to the specific queue
           experiencing loss.
 
@@ -613,16 +612,16 @@ A.2.  Analysis Strategies
       of the event.
 
    *  Causal analysis (when meaningful): Which flows likely contributed
-      to the interface/device condition?  For congestive drops (e.g. no-
-      buffer/class), this is determined by identifying the top senders
-      (by total volume or rate) in the same traffic class and egress
+      to the interface/device condition?  For congestive discards (e.g.
+      no-buffer), this is determined by identifying the top senders (by
+      total volume or rate) in the same traffic class and egress
       interface during the anomaly.
 
 A.3.  Operational Example: Impacted Flows (Congestion Drops)
 
-   Scenario: an anomaly is detected in no-buffer/class discards on
-   Ethernet1/0 (ifIndex 10) in the egress direction.  The drops are
-   occurring in the Best Effort queue (DSCP 0).
+   Scenario: an anomaly is detected in no-buffer discards on Ethernet1/0
+   (ifIndex 10) in the egress direction.  The drops are occurring in the
+   Best Effort queue (DSCP 0).
 
    1.  Signal: Interface discard counter
 
@@ -632,7 +631,7 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
 
        *  Interface: 10 (egress)
 
-       *  Class: no-buffer/class (value 38; see Table 1)
+       *  Class: no-buffer (value 38; see Table 1)
 
        *  Queue/DSCP: 0
 
@@ -648,9 +647,9 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
        interface) AND egressInterface = 10 -- 2.  Match Time Window (any
        overlap with counter interval) AND flowEnd >= '2025-09-18
        10:00:00' AND flowStart <= '2025-09-18 10:01:00' -- 3.  Match
-       Discard Class (no-buffer/class) AND flowDiscardClass = 38 -- 4.
-       Match Traffic Class context (Best Effort) AND ipDiffServCodePoint
-       = 0 GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
+       Discard Class (no-buffer) AND flowDiscardClass = 38 -- 4.  Match
+       Traffic Class context (Best Effort) AND ipDiffServCodePoint = 0
+       GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
        total_pkt_discards DESC LIMIT 10;
 
    3.  Result
@@ -659,15 +658,15 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
        event, allowing the operator to pinpoint specific applications or
        users impacted by the congestion:
 
-   +==========+=============+===========+========+================+==================+
-   |src_addr  |dst_addr     |l4_dst_port|protocol|flowDiscardClass|total_pkt_discards|
-   +==========+=============+===========+========+================+==================+
-   |192.0.2.10|198.51.100.55|443        |6 (TCP) |38              |            15,400|
-   +----------+-------------+-----------+--------+----------------+------------------+
-   |192.0.2.12|198.51.100.80|80         |6 (TCP) |38              |             2,100|
-   +----------+-------------+-----------+--------+----------------+------------------+
+   +==========+=============+===========+========+====================+
+   |src_addr  |dst_addr     |l4_dst_port|protocol| total_pkt_discards |
+   +==========+=============+===========+========+====================+
+   |192.0.2.10|198.51.100.55|443        |6 (TCP) |             15,400 |
+   +----------+-------------+-----------+--------+--------------------+
+   |192.0.2.12|198.51.100.80|80         |6 (TCP) |              2,100 |
+   +----------+-------------+-----------+--------+--------------------+
 
-                                  Table 2
+                                 Table 2
 
 A.4.  Operational Example: Causal Flows (Congestion Drops)
 
@@ -686,7 +685,7 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
 
        *  Interface: 10 (egress)
 
-       *  Class: no-buffer/class (value 38)
+       *  Class: no-buffer (value 38)
 
        *  Queue/DSCP: 0
 
@@ -719,13 +718,13 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
        congestion.  The total_drops column (if present) can still be
        used to see which of these heavy flows also suffered loss.
 
-   +==========+=============+===========+========+===========+==================+
-   |src_addr  |dst_addr     |l4_dst_port|protocol|total_bytes|total_pkt_discards|
-   +==========+=============+===========+========+===========+==================+
-   |10.0.0.5  |192.0.2.200  |443        |6 (TCP) |850,000,000|             2,100|
-   +----------+-------------+-----------+--------+-----------+------------------+
-   |192.0.2.10|198.51.100.55|443        |6 (TCP) | 15,000,000|            15,400|
-   +----------+-------------+-----------+--------+-----------+------------------+
+   +==========+=============+===========+========+===========+==========+==================+
+   |src_addr  |dst_addr     |l4_dst_port|protocol|total_bytes|total_pkts|total_pkt_discards|
+   +==========+=============+===========+========+===========+==========+==================+
+   |10.0.0.5  |192.0.2.200  |443        |6 (TCP) |850,000,000| 1,214,285|             2,100|
+   +----------+-------------+-----------+--------+-----------+----------+------------------+
+   |192.0.2.10|198.51.100.55|443        |6 (TCP) | 15,000,000|    21,000|            15,400|
+   +----------+-------------+-----------+--------+-----------+----------+------------------+
 
                                   Table 3
 
