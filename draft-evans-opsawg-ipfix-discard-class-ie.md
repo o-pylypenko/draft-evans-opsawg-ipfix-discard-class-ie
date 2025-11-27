@@ -311,7 +311,7 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
 
 2. Correlation: SQL Query
 
-   The operator queries the IPFIX store to perform impact analysis — identifying symptomatic flows of the congestion event.
+   The operator queries the IPFIX store to perform impact analysis — identifying symptomatic flows of the congestion event:
 
    ```sql
    SELECT
@@ -319,7 +319,7 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
        dst_addr,
        l4_dst_port,
        protocol,
-       SUM(droppedPacketDeltaCount) AS total_drops
+       SUM(droppedPacketDeltaCount) AS total_pkt_discards
    FROM flow_records
    WHERE
        -- 0. Match Observation Domain
@@ -336,18 +336,18 @@ Scenario: an anomaly is detected in no-buffer/class discards on Ethernet1/0 (ifI
    GROUP BY
        src_addr, dst_addr, l4_dst_port, protocol
    ORDER BY
-       total_drops DESC
+       total_pkt_discards DESC
    LIMIT 10;
    ```
 
 3. Result
 
-   The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion.
+   The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion:
 
-| src_addr   | dst_addr      | l4_dst_port | protocol | total_drops |
-| :--------- | :------------ | :---------- | :------- | ----------: |
-| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |       15400 |
-| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |        2100 |
+| src_addr   | dst_addr      | l4_dst_port | protocol | flowDiscardClass | total_pkt_drops |
+| :---       | :---          | :---        | :---     | :---             | ---:            |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  | 38               |          15,400 |
+| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  | 38               |           2,100 |
 
 Operational Example: Causal Flows (Congestion Drops) {#causal-flows}
 ----------------------------------------------------
@@ -375,8 +375,8 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
        l4_dst_port,
        protocol,
        SUM(octetDeltaCount)          AS total_bytes,
-       SUM(packetDeltaCount)         AS total_packets,
-       SUM(droppedPacketDeltaCount)  AS total_drops
+       SUM(packetDeltaCount)         AS total_pkts,
+       SUM(droppedPacketDeltaCount)  AS total_pkt_discards
    FROM flow_records
    WHERE
        -- 0. Match Observation Domain
@@ -399,12 +399,12 @@ Using the same scenario as in {{impacted-flows}}, the operator now wants to iden
 
    This query returns flows that carried the most traffic through the congested interface and queue during the interval. These high-volume flows are candidates for having contributed to the congestion. The total_drops column (if present) can still be used to see which of these heavy flows also suffered loss.
 
-| src_addr    | dst_addr      | l4_dst_port | total_bytes | total_drops |
-| :---        | :---          | :---    | :---        | :---        |
-| 10.0.0.5    | 192.0.2.200   | 443     | 850 MB      | 0           |
-| 192.0.2.10  | 198.51.100.55 | 443     | 15 MB       | 15,400      |
+| src_addr    | dst_addr      | l4_dst_port | protocol | total_bytes  | total_pkt_discards |
+| :---        | :---          | :---        | :---     | ---:         | ---:               |
+| 10.0.0.5    | 192.0.2.200   | 443         | 6 (TCP)  | 850,000,000  | 2,100              |
+| 192.0.2.10  | 198.51.100.55 | 443         | 6 (TCP)  | 15,000,000   | 15,400             |
 
-In this example, the flow from 10.0.0.5 transferred 850 MB without drops, while the smaller flow from 192.0.2.10 suffered significant packet loss.
+In this example, the flow from 10.0.0.5 transferred 850 MB with limited discards, while the smaller flow from 192.0.2.10 suffered significant packet loss.
 
 Implementation Note on Sampling {#sampling}
 -------------------------------
@@ -419,7 +419,6 @@ The sampling-rate multiplier is N.  Estimated totals are then:
    * estimated_total_dropped_packets  = droppedPacketDeltaCount * N
    * estimated_total_dropped_octets   = droppedOctetDeltaCount  * N
 
-For example:
-If the exporter samples 1 in every 100 packets, the multiplier is 100.  If the exporter samples 1 in every 1000 packets, the multiplier is 1000.
+For example, if the exporter samples 1 in every 100 packets, the multiplier is 100.  If the exporter samples 1 in every 1000 packets, the multiplier is 1000.
 
 Exporters typically report their sampling configuration via IPFIX (samplingInterval and/or samplingProbability).  Because sampling is probabilistic, these estimates are approximate; using larger time windows and higher-volume aggregates tends to make them more robust.
