@@ -324,15 +324,16 @@ Table of Contents
          +------------------------------+------------------------+
          | no-buffer                    | 38                     |
          +------------------------------+------------------------+
-         | no-buffer/class              | 39                     |
-         +------------------------------+------------------------+
 
               Table 1: Flow discard classification values and
                        corresponding discard classes
 
-   no-buffer/class conveys per-QoS class congestion loss; the specific
-   class (e.g., DSCP/class index, or L2 PCP) SHOULD be exported via the
-   appropriate companion IE in the same record.
+   For discard classes where per-traffic-class granularity is
+   operationally significant (e.g., no-buffer, policy/l3/policer), the
+   traffic class SHOULD be conveyed via companion IEs in the same Flow
+   Record (e.g., ipDiffServCodePoint for L3, dot1qPriority for L2).
+   This enables correlation with per-class interface counters from
+   [I-D.ietf-opsawg-discardmodel].
 
 3.4.  Implementation Requirements
 
@@ -390,23 +391,19 @@ Table of Contents
        across all records for that flow represents the total flow-level
        discards.
 
-   5.  Congestive loss traffic class (no-buffer/class).
+   5.  Traffic class context.  For discard classes where per-class
+       correlation is operationally significant (e.g., no-buffer,
+       policy/l3/policer), exporters SHOULD include a traffic-class IE
+       in the same record (e.g., ipDiffServCodePoint or ipClassOfService
+       for L3, dot1qPriority for L2).  If classification occurs after
+       remarking, exporters SHOULD use the post-remark class, or provide
+       a device queue-ID→class mapping via IPFIX Options data.
 
-       *  If flowDiscardClass equals no-buffer/class, the traffic-class
-          identifier used by the queueing system MUST be present in the
-          same record, carried in exactly one suitable IE (e.g.,
-          ipDiffServCodePoint or ipClassOfService for L3, or
-          dot1qPriority for L2).
-
-       *  If classification occurs after remarking, exporters MUST use
-          the corresponding post-class IE where available, or provide a
-          device queue-ID→class mapping via IPFIX Options data.
-
-   6.  Context (recommended).  To aid correlation with interface/device/
-       control-plane counters, exporters SHOULD include time bounds
-       (flowStart/flowEnd or an observation-time IE), ingressInterface/
-       egressInterface as applicable, and observationPointId when
-       multiple pipeline stages/taps exist.
+   6.  Context.  To aid correlation with interface/device/control-plane
+       counters, exporters SHOULD include time bounds (flowStart/flowEnd
+       or an observation-time IE), ingressInterface/egressInterface as
+       applicable, and observationPointId when multiple pipeline stages/
+       taps exist.
 
 3.4.3.  Collector Requirements
 
@@ -422,10 +419,10 @@ Table of Contents
        collectors MUST treat it as a coarse classification that may
        encompass multiple leaves.
 
-   3.  Congestive loss traffic class.  For no-buffer/class, when a
-       traffic-class IE is present, collectors MUST use it to align with
-       per-class counters; if absent, collectors MAY apply local device
-       mappings if available.
+   3.  Traffic class correlation.  When a traffic-class IE is present
+       alongside no-buffer or policy/l3/policer, collectors SHOULD use
+       it to correlate with per-class interface counters.  If absent,
+       collectors MAY apply local device mappings if available.
 
    4.  Unknown values.  Collectors MUST handle unknown/unassigned values
        gracefully (e.g., categorize as “unknown”) without rejecting the
@@ -651,7 +648,7 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
        interface) AND egressInterface = 10 -- 2.  Match Time Window (any
        overlap with counter interval) AND flowEnd >= '2025-09-18
        10:00:00' AND flowStart <= '2025-09-18 10:01:00' -- 3.  Match
-       Discard Class (no-buffer/class) AND flowDiscardClass = 39 -- 4.
+       Discard Class (no-buffer/class) AND flowDiscardClass = 38 -- 4.
        Match Traffic Class context (Best Effort) AND ipDiffServCodePoint
        = 0 GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
        total_pkt_discards DESC LIMIT 10;
@@ -698,7 +695,7 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
        The operator queries the IPFIX store to perform a causal analysis
        by ranking flows by total traffic volume in the same time window,
        interface, and traffic class.  The query does not require
-       flowDiscardClass = 39, since flows can contribute to congestion
+       flowDiscardClass = 38, since flows can contribute to congestion
        even if only some packets (or none of the sampled packets) were
        dropped.
 
