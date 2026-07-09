@@ -1621,7 +1621,7 @@ Accordingly, IPFIX Transport Sessions carrying this Information Element should b
             <p id="section-5.1-2.6.1">Units: none<a href="#section-5.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.7">
-            <p id="section-5.1-2.7.1">Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry <a href="#subregistry" class="auto internal xref">Section 5.2</a>; unassigned values <span class="bcp14">MUST</span> be treated as unknown <a href="#impl-semantics" class="auto internal xref">Section 3.4.1</a><a href="#section-5.1-2.7.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.7.1">Range: 0..255. Assigned values are maintained in the IANA "flowDiscardClass (Value TBD)" subregistry <a href="#subregistry" class="auto internal xref">Section 5.2</a>; unassigned values <span class="bcp14">MUST</span> be treated as unknown <a href="#impl-semantics" class="auto internal xref">Section 3.4.1</a><a href="#section-5.1-2.7.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.8">
             <p id="section-5.1-2.8.1">Reversibility: reversible (value does not change under flow reversal as per <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>)<a href="#section-5.1-2.8.1" class="pilcrow">¶</a></p>
@@ -1666,7 +1666,7 @@ Accordingly, IPFIX Transport Sessions carrying this Information Element should b
             </ul>
 </li>
         </ul>
-<p id="section-5.2-3">The initial contents of the subregistry are the values listed in <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>, with this document as the Reference for each entry.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+<p id="section-5.2-3">The initial contents of the subregistry are the assigned values listed in <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>: values 0-29 and 255. Values 30-254 are unassigned.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <p id="section-5.2-4">Designated Expert guidance: Experts <span class="bcp14">SHOULD</span> maintain the hierarchical structure by ensuring each new value's Name is a well-formed path under an existing aggregate (registering the parent aggregate first if absent). New values are assigned from the lowest unassigned code point; preorder numbering is not preserved across additions and implementations do not rely on it.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>

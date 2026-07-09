@@ -525,7 +525,7 @@ Table of Contents
    *  Units: none
 
    *  Range: 0..255.  Assigned values are maintained in the IANA
-      'flowDiscardClass Values' subregistry Section 5.2; unassigned
+      "flowDiscardClass (Value TBD)" subregistry Section 5.2; unassigned
       values MUST be treated as unknown Section 3.4.1
 
    *  Reversibility: reversible (value does not change under flow
@@ -556,8 +556,9 @@ Table of Contents
 
       -  Reference
 
-   The initial contents of the subregistry are the values listed in
-   Table 1, with this document as the Reference for each entry.
+   The initial contents of the subregistry are the assigned values
+   listed in Table 1: values 0-29 and 255.  Values 30-254 are
+   unassigned.
 
    Designated Expert guidance: Experts SHOULD maintain the hierarchical
    structure by ensuring each new value's Name is a well-formed path
