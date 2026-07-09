@@ -187,7 +187,7 @@ The code points for flowDiscardClass are maintained by IANA in the "flowDiscardC
 | policy/l3/rpf                         |  27    |
 | policy/l3/ddos                        |  28    |
 | no-buffer                             |  29    |
-| unknown                               |  30    |
+| unknown                               | 255    |
 {: #flowDiscardClass-table title="Flow discard classification values and corresponding discard classes"}
 
 For discard classes where per-traffic-class granularity is operationally significant (e.g., no-buffer, policy/l3/policer), the traffic class SHOULD be conveyed via companion IEs in the same Flow Record (e.g., ipDiffServCodePoint for L3, dot1qPriority for L2). This enables correlation with per-class interface counters from {{!I-D.ietf-opsawg-discardmodel}}.
