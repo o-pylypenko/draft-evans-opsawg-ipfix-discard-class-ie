@@ -47,7 +47,23 @@ author:
     country: US
     email: kcheaito@amazon.com
 
+normative:
+  I-D.ietf-opsawg-discardmodel:
+  RFC2119:
+  RFC5103:
+  RFC7011:
+  RFC7012:
+  RFC7013:
+  RFC8126:
+  RFC8174:
 
+informative:
+  RFC7270:
+  IANA-IPFIX:
+    title: IP Flow Information Export (IPFIX) Entities
+    author:
+      org: IANA
+    target: https://www.iana.org/assignments/ipfix/
 
 --- abstract
 
@@ -129,7 +145,7 @@ flowDiscardClass Definition  {#flowDiscardClass-definition}
 
    Units: none
 
-   Range: 0..38 (values from {{flowDiscardClass-table}}; other values are unassigned and MUST be treated as unknown)
+   Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry {{subregistry}}; unassigned values MUST be treated as unknown {{impl-semantics}}
 
    Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
 
@@ -202,7 +218,7 @@ Implementation Requirements {#implreq}
 3. Specificity. Exporters SHOULD report the most-specific known class (a leaf). If the specific leaf is unknown, the nearest known parent/aggregate SHOULD be used (e.g., errors/l3 when only the layer and error nature are known, or l3 when only the layer is known). The value unknown (255) MUST be used only when no classification whatsoever is available, and permits an exporter to report that discards occurred without asserting a cause or layer.
 4. Interval semantics.  When exported on an interval Flow Record, the presence of flowDiscardClass indicates that at least one packet in the interval matched that class.  Exporters MUST include droppedPacketDeltaCount and/or droppedOctetDeltaCount in the same record to quantify the volume attributed to that specific discard reason.  When multiple discard reasons affect the same flow (per point 2), the sum of per-reason dropped counts across all records for that flow represents the total flow-level discards.
 5. Traffic class context. For discard classes where per-class correlation is operationally significant (e.g., no-buffer, policy/l3/policer), exporters SHOULD include a traffic-class IE in the same record (e.g., ipDiffServCodePoint or ipClassOfService for L3, dot1qPriority for L2). If classification occurs after remarking, exporters SHOULD use the post-remark class, or provide a device queue-ID→class mapping via IPFIX Options data.
-6. Context. The flow structure in [I-D.ietf-opsawg-discardmodel] is keyed by direction; to preserve this, exporters MUST include flowDirection [IANA-IPFIX] or otherwise make the direction of the classified discards unambiguous (e.g., by exporting per-direction Flow Records). To aid correlation with interface/device/control-plane counters, exporters SHOULD additionally include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
+6. Context. The flow structure in {{!I-D.ietf-opsawg-discardmodel}} is keyed by direction; to preserve this, exporters MUST include flowDirection {{IANA-IPFIX}} or otherwise make the direction of the classified discards unambiguous (e.g., by exporting per-direction Flow Records). To aid correlation with interface/device/control-plane counters, exporters SHOULD additionally include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.
 
 ### Collector Requirements {#impl-collector}
 1. Multiple records per flow.  When multiple Flow Records carry different flowDiscardClass values for the same flow keys and overlapping time intervals, collectors MUST treat them as indicating distinct discard reasons affecting the same flow. Collectors SHOULD aggregate these records when computing per-flow total discards, while preserving per-reason breakdowns for root cause analysis.
@@ -215,7 +231,7 @@ Implementation Requirements {#implreq}
 
 1. Exporters and collectors MAY also use existing IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for filtering, correlation, or redundancy.
 2. flowDiscardClass alone MUST be sufficient to recover the discard classification.
-3. Exporters MAY continue to export forwardingStatus ({{?RFC7270}}) in parallel. When both are present, flowDiscardClass MUST be considered authoritative for discard classification.
+3. Exporters MAY continue to export forwardingStatus {{?RFC7270}} in parallel. When both are present, flowDiscardClass MUST be considered authoritative for discard classification.
 4. When flow sampling is active, the presence of flowDiscardClass indicates at least one sampled packet matched that class.
 
 Security Considerations {#security}
@@ -238,7 +254,6 @@ IANA is requested to register a new Information Element as follows:
 * Abstract Data Type: unsigned8
 * Data Type Semantics: identifier
 * Units: none
-* Range: 0..38 (values are listed in the “flowDiscardClass Values” subregistry created below; other values are unassigned and MUST be treated as unknown)
 * Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry {{subregistry}}; unassigned values MUST be treated as unknown {{impl-semantics}}
 * Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
 * Status: current
@@ -249,7 +264,7 @@ IANA is requested to register a new Information Element as follows:
 IANA is requested to create a new subregistry titled "flowDiscardClass Values" under the IPFIX Information Elements registry. This subregistry contains the
 enumerated values for the flowDiscardClass IE.
 
-* Registration Procedure: Expert Review ({{!RFC8126}})
+* Registration Procedure: Expert Review {{!RFC8126}}
 * Reference: This document; {{!RFC7013}}
 * Fields:
   - Value (integer)
