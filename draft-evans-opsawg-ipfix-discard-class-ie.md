@@ -250,7 +250,7 @@ IANA is requested to register a new Information Element as follows:
 * Abstract Data Type: unsigned8
 * Data Type Semantics: identifier
 * Units: none
-* Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry {{subregistry}}; unassigned values MUST be treated as unknown {{impl-semantics}}
+* Range: 0..255. Assigned values are maintained in the IANA "flowDiscardClass (Value TBD)" subregistry {{subregistry}}; unassigned values MUST be treated as unknown {{impl-semantics}}
 * Reversibility: reversible (value does not change under flow reversal as per {{!RFC5103}})
 * Status: current
 * Reference: This document; {{!RFC7013}}
@@ -267,7 +267,7 @@ IANA is requested to create a new subregistry titled "flowDiscardClass (Value TB
   - Description (optional)
   - Reference
 
-The initial contents of the subregistry are the values listed in {{flowDiscardClass-table}}, with this document as the Reference for each entry.
+The initial contents of the subregistry are the assigned values listed in {{flowDiscardClass-table}}: values 0-29 and 255. Values 30-254 are unassigned.
 
 Designated Expert guidance: Experts SHOULD maintain the hierarchical structure by ensuring each new value's Name is a well-formed path under an existing aggregate (registering the parent aggregate first if absent). New values are assigned from the lowest unassigned code point; preorder numbering is not preserved across additions and implementations do not rely on it.
 
