@@ -311,7 +311,7 @@ Scenario: an anomaly is detected in no-buffer discards on Ethernet1/0 (ifIndex 1
 
 2. Correlation: SQL Query
 
-   The operator queries the IPFIX store for all flows sharing the congested resource — matching the observation domain, egress interface, time window, and traffic class per {{correlation-keys}} — and attributes loss per flow only where flowDiscardClass indicates no-buffer. The conditional aggregation is essential: under the multi-record export model {{#impl-exporter}}, a flow may carry discard records for several distinct reasons in the same interval, and an unscoped sum of dropped counts would conflate unrelated discards (e.g., policer or ACL drops) with the congestion event.
+   The operator queries the IPFIX store for all flows sharing the congested resource — matching the observation domain, egress interface, time window, and traffic class per {{correlation-keys}} — and attributes loss per flow only where flowDiscardClass indicates no-buffer. The conditional aggregation is essential: under the multi-record export model {{impl-exporter}}, a flow may carry discard records for several distinct reasons in the same interval, and an unscoped sum of dropped counts would conflate unrelated discards (e.g., policer or ACL drops) with the congestion event.
 
 ~~~ sql
 SELECT src_addr, dst_addr, l4_dst_port, protocol,
