@@ -164,13 +164,10 @@ Table of Contents
       match a valid route; configuration errors may result in a valid
       packet incorrectly matching an ACL and being dropped.
 
-      Device discard counters do not by themselves establish operator
-      intent.  Discards reported under policy (e.g., ACL/policer)
-      indicate only that traffic matched a configured rule; such
-      discards may still be unintended if the configuration is in error.
-      Determining intent for policy discards requires external context
-      (e.g., configuration validation and change history) which is out
-      of scope for this specification.
+   Note that discard counters do not by themselves establish operator
+   intent; see Section 6.1 of [I-D.ietf-opsawg-discardmodel].
+   Determining intent for policy discards is out of scope for this
+   specification.
 
 3.  Information Element
 
@@ -191,11 +188,24 @@ Table of Contents
        "discards"; interface, device, and control-plane components are
        out of scope for this IE.
 
-   2.  Hierarchy preserved.  The enumeration mirrors the model: both
-       leaves (specific reasons) and structural aggregates are assigned
-       values so collectors can perform coarse or fine roll-ups.  For
-       L3, structural aggregates include address-family and cast (v4/v6,
-       unicast/multicast/broadcast).
+   2.  Hierarchy preserved, causes only.  The enumeration mirrors the
+       causal-classification subtrees of the model (errors, policy, no-
+       buffer): both leaves (specific reasons) and their structural
+       aggregates are assigned values so collectors can perform coarse
+       or fine roll-ups.  The layer, address-family, and cast dimensions
+       of [I-D.ietf-opsawg-discardmodel]. (e.g., l2, l3/address-family-
+       stat/unicast) are intentionally not assigned values: in the
+       information model they are an orthogonal accounting dimension
+       rather than discard causes, and per requirement 8 of that model
+       each discarded packet accounts against exactly one error, policy,
+       or no-buffer subclass.  In IPFIX the layer/address-family/cast
+       context is recoverable from existing IEs in the same Flow Record
+       (e.g., ipVersion, source/destination addresses,
+       dataLinkFrameType).  This restriction makes flowDiscardClass
+       values mutually exclusive by construction: distinct values for
+       the same flow and interval always denote distinct discarded
+       packets, so per-flow totals can be computed by summation without
+       risk of double counting.
 
    3.  Self-contained decoding.  The value alone carries the discard
        class.  Exporters and collectors can still use other IEs (e.g.,
@@ -206,10 +216,13 @@ Table of Contents
        most-specific known class when available; aggregate values
        provide a fallback when only a broader category is known.
 
-   5.  Implementation-friendly ordering.  Codes are assigned in preorder
-       traversal (where each parent is numbered before its children) to
-       reflect the model’s hierarchy and simplify range/roll-up handling
-       in implementations.
+   5.  Implementation-friendly ordering.  Initial codes are assigned in
+       preorder traversal (where each parent is numbered before its
+       children) to reflect the model's hierarchy.  This ordering is a
+       property of the initial assignment only: future registrations are
+       appended and MAY NOT preserve preorder.  Implementations MUST
+       determine hierarchy from the registry's Name field (the
+       classification path), not from numeric value ranges.
 
 3.2.  flowDiscardClass Definition
 
@@ -252,83 +265,67 @@ Table of Contents
          +==============================+========================+
          | Discard Class                | flowDiscardClass Value |
          +==============================+========================+
-         | l2                           | 0                      |
+         | errors                       | 0                      |
          +------------------------------+------------------------+
-         | l3                           | 1                      |
+         | errors/l2                    | 1                      |
          +------------------------------+------------------------+
-         | l3/v4                        | 2                      |
+         | errors/l2/rx                 | 2                      |
          +------------------------------+------------------------+
-         | l3/v4/unicast                | 3                      |
+         | errors/l2/rx/crc-error       | 3                      |
          +------------------------------+------------------------+
-         | l3/v4/multicast              | 4                      |
+         | errors/l2/rx/invalid-mac     | 4                      |
          +------------------------------+------------------------+
-         | l3/v4/broadcast              | 5                      |
+         | errors/l2/rx/invalid-vlan    | 5                      |
          +------------------------------+------------------------+
-         | l3/v6                        | 6                      |
+         | errors/l2/rx/invalid-frame   | 6                      |
          +------------------------------+------------------------+
-         | l3/v6/unicast                | 7                      |
+         | errors/l2/tx                 | 7                      |
          +------------------------------+------------------------+
-         | l3/v6/multicast              | 8                      |
+         | errors/l3                    | 8                      |
          +------------------------------+------------------------+
-         | errors                       | 9                      |
+         | errors/l3/rx                 | 9                      |
          +------------------------------+------------------------+
-         | errors/l2                    | 10                     |
+         | errors/l3/rx/checksum-error  | 10                     |
          +------------------------------+------------------------+
-         | errors/l2/rx                 | 11                     |
+         | errors/l3/rx/mtu-exceeded    | 11                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/crc-error       | 12                     |
+         | errors/l3/rx/invalid-packet  | 12                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/invalid-mac     | 13                     |
+         | errors/l3/ttl-expired        | 13                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/invalid-vlan    | 14                     |
+         | errors/l3/no-route           | 14                     |
          +------------------------------+------------------------+
-         | errors/l2/rx/invalid-frame   | 15                     |
+         | errors/l3/invalid-sid        | 15                     |
          +------------------------------+------------------------+
-         | errors/l2/tx                 | 16                     |
+         | errors/l3/invalid-label      | 16                     |
          +------------------------------+------------------------+
-         | errors/l3                    | 17                     |
+         | errors/l3/tx                 | 17                     |
          +------------------------------+------------------------+
-         | errors/l3/rx                 | 18                     |
+         | errors/internal              | 18                     |
          +------------------------------+------------------------+
-         | errors/l3/rx/checksum-error  | 19                     |
+         | errors/internal/parity-error | 19                     |
          +------------------------------+------------------------+
-         | errors/l3/rx/mtu-exceeded    | 20                     |
+         | policy                       | 20                     |
          +------------------------------+------------------------+
-         | errors/l3/rx/invalid-packet  | 21                     |
+         | policy/l2                    | 21                     |
          +------------------------------+------------------------+
-         | errors/l3/ttl-expired        | 22                     |
+         | policy/l2/acl                | 22                     |
          +------------------------------+------------------------+
-         | errors/l3/no-route           | 23                     |
+         | policy/l3                    | 23                     |
          +------------------------------+------------------------+
-         | errors/l3/invalid-sid        | 24                     |
+         | policy/l3/acl                | 24                     |
          +------------------------------+------------------------+
-         | errors/l3/invalid-label      | 25                     |
+         | policy/l3/policer            | 25                     |
          +------------------------------+------------------------+
-         | errors/l3/tx                 | 26                     |
+         | policy/l3/null-route         | 26                     |
          +------------------------------+------------------------+
-         | errors/internal              | 27                     |
+         | policy/l3/rpf                | 27                     |
          +------------------------------+------------------------+
-         | errors/internal/parity-error | 28                     |
+         | policy/l3/ddos               | 28                     |
          +------------------------------+------------------------+
-         | policy                       | 29                     |
+         | no-buffer                    | 29                     |
          +------------------------------+------------------------+
-         | policy/l2                    | 30                     |
-         +------------------------------+------------------------+
-         | policy/l2/acl                | 31                     |
-         +------------------------------+------------------------+
-         | policy/l3                    | 32                     |
-         +------------------------------+------------------------+
-         | policy/l3/acl                | 33                     |
-         +------------------------------+------------------------+
-         | policy/l3/policer            | 34                     |
-         +------------------------------+------------------------+
-         | policy/l3/null-route         | 35                     |
-         +------------------------------+------------------------+
-         | policy/l3/rpf                | 36                     |
-         +------------------------------+------------------------+
-         | policy/l3/ddos               | 37                     |
-         +------------------------------+------------------------+
-         | no-buffer                    | 38                     |
+         | unknown                      | 30                     |
          +------------------------------+------------------------+
 
               Table 1: Flow discard classification values and
@@ -360,7 +357,12 @@ Table of Contents
        to another code.  Exporters MUST NOT transmit unassigned values.
 
    4.  Reversibility.  The value of flowDiscardClass MUST NOT change
-       under biflow reversal as defined by [RFC5103].
+       under biflow reversal as defined by [RFC5103].  Note that in a
+       Biflow Record a single flowDiscardClass value does not identify
+       which direction experienced the discards; the direction is
+       indicated by which dropped-count IEs are non-zero (forward vs.
+       reverse).  Exporters requiring unambiguous per-direction
+       classification SHOULD export separate uniflow records.
 
 3.4.2.  Exporter Requirements
 
@@ -368,24 +370,23 @@ Table of Contents
        flowDiscardClass.
 
    2.  Multiplicity.  When multiple discard reasons apply to the same
-       flow interval, exporters MUST export multiple Flow Records, one
-       per discard reason.  Each Flow Record MUST carry the same flow
-       keys (5-tuple, interfaces, timestamps) but a distinct
-       flowDiscardClass value.  Where possible, exporters SHOULD include
-       per-reason droppedPacketDeltaCount and/or droppedOctetDeltaCount
-       to quantify the volume attributed to each specific discard class.
-
-       *  While this approach creates multiple Flow Records for the same
-          flow 5-tuple, it provides crucial diagnostic granularity.
-          Collectors can easily aggregate by summing dropped counts
-          across records with the same flow keys, while preserving the
-          ability to attribute loss to specific root causes.  This
-          design maintains full fidelity of per-reason discard
-          statistics.
+       flow interval, exporters SHOULD export multiple Flow Records, one
+       per discard reason, each carrying the same flow keys (5-tuple,
+       interfaces, timestamps) but a distinct flowDiscardClass value.
+       Exporters that can track only one discard reason per flow entry
+       (e.g., due to hardware flow-cache constraints) MUST report the
+       reason accounting for the greatest number of discarded packets in
+       the interval, or the nearest common parent/aggregate of the
+       applicable reasons.
 
    3.  Specificity.  Exporters SHOULD report the most-specific known
-       class (a leaf).  If the specific leaf is unknown, an appropriate
-       parent/aggregate MAY be used.
+       class (a leaf).  If the specific leaf is unknown, the nearest
+       known parent/aggregate SHOULD be used (e.g., errors/l3 when only
+       the layer and error nature are known, or l3 when only the layer
+       is known).  The value unknown (255) MUST be used only when no
+       classification whatsoever is available, and permits an exporter
+       to report that discards occurred without asserting a cause or
+       layer.
 
    4.  Interval semantics.  When exported on an interval Flow Record,
        the presence of flowDiscardClass indicates that at least one
@@ -405,11 +406,15 @@ Table of Contents
        remarking, exporters SHOULD use the post-remark class, or provide
        a device queue-ID→class mapping via IPFIX Options data.
 
-   6.  Context.  To aid correlation with interface/device/control-plane
-       counters, exporters SHOULD include time bounds (flowStart/flowEnd
-       or an observation-time IE), ingressInterface/egressInterface as
-       applicable, and observationPointId when multiple pipeline stages/
-       taps exist.
+   6.  Context.  The flow structure in [I-D.ietf-opsawg-discardmodel] is
+       keyed by direction; to preserve this, exporters MUST include
+       flowDirection [IANA-IPFIX] or otherwise make the direction of the
+       classified discards unambiguous (e.g., by exporting per-direction
+       Flow Records).  To aid correlation with interface/device/control-
+       plane counters, exporters SHOULD additionally include time bounds
+       (flowStart/flowEnd or an observation-time IE), ingressInterface/
+       egressInterface as applicable, and observationPointId when
+       multiple pipeline stages/taps exist.
 
 3.4.3.  Collector Requirements
 
@@ -433,6 +438,12 @@ Table of Contents
    4.  Unknown values.  Collectors MUST handle unknown/unassigned values
        gracefully (e.g., categorize as “unknown”) without rejecting the
        record.
+
+   5.  Hierarchy resolution.  Collectors MUST resolve parent/child
+       relationships between values using the classification path in the
+       Name field of the 'flowDiscardClass Values' subregistry.
+       Collectors MUST NOT infer hierarchy from numeric adjacency or
+       value ranges.
 
 3.4.4.  Interoperability with Existing IPFIX IEs
 
@@ -485,6 +496,10 @@ Table of Contents
       subregistry created below; other values are unassigned and MUST be
       treated as unknown)
 
+   *  Range: 0..255.  Assigned values are maintained in the IANA
+      'flowDiscardClass Values' subregistry Section 5.2; unassigned
+      values MUST be treated as unknown Section 3.4.1
+
    *  Reversibility: reversible (value does not change under flow
       reversal as per [RFC5103])
 
@@ -513,14 +528,12 @@ Table of Contents
 
       -  Reference
 
-   Designated Expert guidance: New code points should reflect additions
-   to or clarifications of discard reasons in
-   [I-D.ietf-opsawg-discardmodel] (or its successor).  Existing code
-   points MUST NOT be repurposed.  Backwards-compatible additions are
-   preferred.  Experts SHOULD maintain the hierarchical structure (e.g.,
-   assigning aggregates and leaves consistently) and, where practical,
-   preserve preorder (depth-first) numbering to align with the existing
-   tree.
+   Designated Expert guidance: Experts SHOULD maintain the hierarchical
+   structure by ensuring each new value's Name is a well-formed path
+   under an existing aggregate (registering the parent aggregate first
+   if absent).  New values are assigned from the lowest unassigned code
+   point; preorder numbering is not preserved across additions and
+   implementations do not rely on it.
 
 6.  References
 
@@ -646,19 +659,26 @@ A.3.  Operational Example: Impacted Flows (Congestion Drops)
        The operator queries the IPFIX store to perform impact analysis —
        identifying symptomatic flows of the congestion event:
 
-       sql SELECT src_addr, dst_addr, l4_dst_port, protocol,
-       SUM(droppedPacketDeltaCount) AS total_pkt_discards FROM
-       flow_records WHERE -- 0.  Match Observation Domain
-       observationDomainId = 1234 -- 1.  Match Location (egress
-       interface) AND egressInterface = 10 -- 2.  Match Time Window (any
-       overlap with counter interval) AND flowEnd >= '2025-09-18
-       10:00:00' AND flowStart <= '2025-09-18 10:01:00' -- 3.  Match
-       Discard Class (no-buffer) AND flowDiscardClass = 38 -- 4.  Match
-       Traffic Class context (Best Effort) AND ipDiffServCodePoint = 0
-       GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
-       total_pkt_discards DESC LIMIT 10;
+   SELECT src_addr, dst_addr, l4_dst_port, protocol,
+          SUM(droppedPacketDeltaCount) AS total_pkt_discards
+   FROM   flow_records
+   WHERE
+          -- 0. Match Observation Domain
+          observationDomainId = 1234
+          -- 1. Match Location (egress interface)
+     AND  egressInterface = 10
+          -- 2. Match Time Window (any overlap with counter interval)
+     AND  flowEnd   >= '2025-09-18 10:00:00'
+     AND  flowStart <= '2025-09-18 10:01:00'
+          -- 3. Match Discard Class (no-buffer)
+     AND  flowDiscardClass = 29
+          -- 4. Match Traffic Class context (Best Effort)
+     AND  ipDiffServCodePoint = 0
+   GROUP  BY src_addr, dst_addr, l4_dst_port, protocol
+   ORDER  BY total_pkt_discards DESC
+   LIMIT  10;
 
-   3.  Result
+   1.  Result
 
        The query returns the top flows most affected by the discard
        event, allowing the operator to pinpoint specific applications or
@@ -704,19 +724,32 @@ A.4.  Operational Example: Causal Flows (Congestion Drops)
        even if only some packets (or none of the sampled packets) were
        dropped.
 
-       sql SELECT src_addr, dst_addr, l4_dst_port, protocol,
-       SUM(octetDeltaCount) AS total_bytes, SUM(packetDeltaCount) AS
-       total_pkts, SUM(droppedPacketDeltaCount) AS total_pkt_discards
-       FROM flow_records WHERE -- 0.  Match Observation Domain
-       observationDomainId = 1234 -- 1.  Match Location (egress
-       interface) AND egressInterface = 10 -- 2.  Match Time Window (any
-       overlap with counter interval) AND flowEnd >= '2025-09-18
-       10:00:00' AND flowStart <= '2025-09-18 10:01:00' -- 3.  Match
-       Traffic Class context (Best Effort queue) AND ipDiffServCodePoint
-       = 0 GROUP BY src_addr, dst_addr, l4_dst_port, protocol ORDER BY
-       total_bytes DESC LIMIT 10;
+      SELECT
+          src_addr,
+          dst_addr,
+          l4_dst_port,
+          protocol,
+          SUM(octetDeltaCount)          AS total_bytes,
+          SUM(packetDeltaCount)         AS total_pkts,
+          SUM(droppedPacketDeltaCount)  AS total_pkt_discards
+      FROM flow_records
+      WHERE
+          -- 0. Match Observation Domain
+          observationDomainId = 1234
+          -- 1. Match Location (egress interface)
+          AND egressInterface = 10
+          -- 2. Match Time Window (any overlap with counter interval)
+          AND flowEnd   >= '2025-09-18 10:00:00'
+          AND flowStart <= '2025-09-18 10:01:00'
+          -- 3. Match Traffic Class context (Best Effort queue)
+          AND ipDiffServCodePoint = 0
+      GROUP BY
+          src_addr, dst_addr, l4_dst_port, protocol
+      ORDER BY
+          total_bytes DESC
+      LIMIT 10;
 
-   3.  Result
+   1.  Result
 
        This query returns flows that carried the most traffic through
        the congested interface and queue during the interval.  These
