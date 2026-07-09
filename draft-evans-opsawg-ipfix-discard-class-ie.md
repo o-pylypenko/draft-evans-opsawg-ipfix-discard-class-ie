@@ -305,26 +305,30 @@ Once flow records are correlated with discard counters, operators can rank or gr
 
 * Causal analysis (when meaningful): Which flows likely contributed to the interface/device condition? For congestive discards (e.g. no-buffer), this is determined by identifying the top senders (by total volume or rate) in the same traffic class and egress interface during the anomaly.
 
-Operational Example: Impacted Flows (Congestion Drops) {#impacted-flows}
-------------------------------------------------------
+Operational Example: Congestion Drops {#congestion-example}
+-------------------------------------
 
-Scenario: an anomaly is detected in no-buffer discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0).
+Scenario: an anomaly is detected in no-buffer discards on Ethernet1/0 (ifIndex 10) in the egress direction. The drops are occurring in the Best Effort queue (DSCP 0). The operator wants to answer two questions: which flows were impacted by the loss, and which flows likely caused the congestion.
 
 1. Signal: Interface discard counter
 
    * Time: 2025-09-18 10:00:00 – 10:01:00
    * Observation Domain: 1234
    * Interface: 10 (egress)
-   * Class: no-buffer (value 38; see {{flowDiscardClass-table}})
+   * Class: no-buffer (value 29; see {{flowDiscardClass-table}})
    * Queue/DSCP: 0
 
 2. Correlation: SQL Query
 
-   The operator queries the IPFIX store to perform impact analysis — identifying symptomatic flows of the congestion event:
+   The operator queries the IPFIX store for all flows sharing the congested resource — matching the observation domain, egress interface, time window, and traffic class per {{correlation-keys}} — and attributes loss per flow only where flowDiscardClass indicates no-buffer. The conditional aggregation is essential: under the multi-record export model ({{exporter-requirements}}), a flow may carry discard records for several distinct reasons in the same interval, and an unscoped sum of dropped counts would conflate unrelated discards (e.g., policer or ACL drops) with the congestion event.
 
 ~~~ sql
 SELECT src_addr, dst_addr, l4_dst_port, protocol,
-       SUM(droppedPacketDeltaCount) AS total_pkt_discards
+       SUM(octetDeltaCount)  AS total_bytes,
+       SUM(packetDeltaCount) AS total_pkts,
+       SUM(CASE WHEN flowDiscardClass = 29
+                THEN droppedPacketDeltaCount
+                ELSE 0 END)  AS nobuf_pkt_discards
 FROM   flow_records
 WHERE
        -- 0. Match Observation Domain
@@ -334,80 +338,30 @@ WHERE
        -- 2. Match Time Window (any overlap with counter interval)
   AND  flowEnd   >= '2025-09-18 10:00:00'
   AND  flowStart <= '2025-09-18 10:01:00'
-       -- 3. Match Discard Class (no-buffer)
-  AND  flowDiscardClass = 29
-       -- 4. Match Traffic Class context (Best Effort)
-  AND  ipDiffServCodePoint = 0
-GROUP  BY src_addr, dst_addr, l4_dst_port, protocol
-ORDER  BY total_pkt_discards DESC
-LIMIT  10;
-~~~
-
-3. Result
-
-   The query returns the top flows most affected by the discard event, allowing the operator to pinpoint specific applications or users impacted by the congestion:
-
-| src_addr   | dst_addr      | l4_dst_port | protocol | total_pkt_discards |
-| :---       | :---          | :---        | :---     | ---:               |
-| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |             15,400 |
-| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |              2,100 |
-
-Operational Example: Causal Flows (Congestion Drops) {#causal-flows}
-----------------------------------------------------
-
-Using the same scenario as in {{impacted-flows}}, the operator now wants to identify flows that likely caused the congestion — that is, heavy senders in the affected queue and interface during the anomaly. These flows may or may not themselves have experienced drops.
-
-1. Signal: Interface discard counter
-
-   Same as in Section A.3:
-
-   * Time: 2025-09-18 10:00:00 – 10:01:00
-   * Observation Domain: 1234
-   * Interface: 10 (egress)
-   * Class: no-buffer (value 38)
-   * Queue/DSCP: 0
-
-2. Correlation: SQL Query
-
-   The operator queries the IPFIX store to perform a causal analysis by ranking flows by total traffic volume in the same time window, interface, and traffic class. The query does not require flowDiscardClass = 38, since flows can contribute to congestion even if only some packets (or none of the sampled packets) were dropped.
-
-~~~ sql
-   SELECT
-       src_addr,
-       dst_addr,
-       l4_dst_port,
-       protocol,
-       SUM(octetDeltaCount)          AS total_bytes,
-       SUM(packetDeltaCount)         AS total_pkts,
-       SUM(droppedPacketDeltaCount)  AS total_pkt_discards
-   FROM flow_records
-   WHERE
-       -- 0. Match Observation Domain
-       observationDomainId = 1234
-       -- 1. Match Location (egress interface)
-       AND egressInterface = 10
-       -- 2. Match Time Window (any overlap with counter interval)
-       AND flowEnd   >= '2025-09-18 10:00:00'
-       AND flowStart <= '2025-09-18 10:01:00'
        -- 3. Match Traffic Class context (Best Effort queue)
-       AND ipDiffServCodePoint = 0
-   GROUP BY
-       src_addr, dst_addr, l4_dst_port, protocol
-   ORDER BY
-       total_bytes DESC
-   LIMIT 10;
+  AND  ipDiffServCodePoint = 0
+GROUP  BY src_addr, dst_addr, l4_dst_port, protocol;
 ~~~
 
-3. Result
+   Note that the query deliberately does not filter on flowDiscardClass: doing so would exclude flows with no discard records of the matching class, which — as the results below show — can include the flows most responsible for the congestion.
 
-   This query returns flows that carried the most traffic through the congested interface and queue during the interval. These high-volume flows are candidates for having contributed to the congestion. The total_drops column (if present) can still be used to see which of these heavy flows also suffered loss.
+3. Results: two readings of one result set
 
-| src_addr    | dst_addr      | l4_dst_port | protocol | total_bytes  | total_pkts   | total_pkt_discards |
-| :---        | :---          | :---        | :---     | ---:         | ---:         | ---:               |
-| 10.0.0.5    | 192.0.2.200   | 443         | 6 (TCP)  | 850,000,000  | 1,214,285    | 2,100              |
-| 192.0.2.10  | 198.51.100.55 | 443         | 6 (TCP)  | 15,000,000   | 21,000       | 15,400             |
+   Ordering by nobuf_pkt_discards descending answers the impact question — which flows were the victims of the loss:
 
-In this example, the flow from 10.0.0.5 transferred 850 MB with limited discards, while the smaller flow from 192.0.2.10 suffered significant packet loss.
+| src_addr   | dst_addr      | l4_dst_port | protocol | total_bytes | total_pkts | nobuf_pkt_discards |
+| :---       | :---          | :---        | :---     | ---:        | ---:       | ---:               |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |  15,000,000 |     21,000 |             15,400 |
+| 192.0.2.12 | 198.51.100.80 | 80          | 6 (TCP)  |   4,200,000 |      5,900 |              2,100 |
+
+   Ordering the same result set by total_bytes descending answers the causal question — which flows drove the queue into saturation:
+
+| src_addr   | dst_addr      | l4_dst_port | protocol | total_bytes | total_pkts | nobuf_pkt_discards |
+| :---       | :---          | :---        | :---     | ---:        | ---:       | ---:               |
+| 10.0.0.5   | 192.0.2.200   | 4791        | 17 (UDP) | 850,000,000 |  1,214,285 |                  0 |
+| 192.0.2.10 | 198.51.100.55 | 443         | 6 (TCP)  |  15,000,000 |     21,000 |             15,400 |
+
+   The two readings surface different flows. The flow from 10.0.0.5 transferred 850 MB through the congested queue while suffering no no-buffer loss of its own — its bursts fill the buffer, with the losses landing on competing traffic. It is the primary causal candidate, yet it is invisible to any analysis that considers only flows carrying the discard class. Conversely, the flow from 192.0.2.10 is the most heavily impacted but, at 15 MB, far too small to be causal. flowDiscardClass thus serves both readings: it identifies the victims directly, and it scopes the loss attribution so that the causal ranking is interpreted against the correct discard reason.
 
 Implementation Note on Sampling {#sampling}
 -------------------------------
