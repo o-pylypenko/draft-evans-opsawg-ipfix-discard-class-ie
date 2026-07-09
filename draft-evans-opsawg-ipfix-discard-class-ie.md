@@ -112,7 +112,7 @@ Design Rationale {#rationale}
 The mapping between {{!I-D.ietf-opsawg-discardmodel}} and the IPFIX flowDiscardClass Information Element follows these principles, maintaining consistency with the YANG model while allowing self-contained decoding from a single IE:
 
 1. Scope. The flowDiscardClass Information Element is specifically for reporting flow-level discard reasons, and therefore only represents the flow subtree from {{!I-D.ietf-opsawg-discardmodel}}. The component is implicitly "flow" and the type is implicitly "discards"; interface, device, and control-plane components are out of scope for this IE.
- 
+
 2.  Hierarchy preserved, causes only. The enumeration mirrors the causal-classification subtrees of the model (errors, policy, no-buffer): both leaves (specific reasons) and their structural aggregates are assigned values so collectors can perform coarse or fine roll-ups. Layer-qualified nodes that appear within a causal subtree (e.g., errors/l3, policy/l2) are assigned values, as they identify a cause at coarse granularity. By contrast, the standalone layer, address-family, and cast accounting dimensions of {{!I-D.ietf-opsawg-discardmodel}} (e.g., l2, l3/address-family-stat/unicast) are intentionally not assigned values: in the information model these are an orthogonal accounting dimension rather than discard causes, and per requirement 8 of that model each discarded packet accounts against exactly one error, policy, or no-buffer subclass. In IPFIX the layer/address-family/cast context is recoverable from existing IEs in the same Flow Record (e.g., ipVersion, source/destination addresses, dataLinkFrameType). This restriction makes flowDiscardClass values mutually exclusive by construction: distinct values for the same flow and interval always denote distinct discarded packets, so per-flow totals can be computed by summation without risk of double counting.
 
 3. Self-contained decoding. The value alone carries the discard class. Exporters and collectors can still use other IEs (e.g., flowDirection, ipVersion, addresses, ipDiffServCodePoint) for correlation, but they are not required to decode the class.
@@ -257,7 +257,7 @@ IANA is requested to register a new Information Element as follows:
 
 ## New Subregistry: "flowDiscardClass (Value TBD)" {#subregistry}
 
-IANA is requested to create a new subregistry titled "flowDiscardClass (Value TBD)" under the IPFIX Information Elements registry, where TBD is the ElementId assigned in {{IANA-IPFIX}}, following the naming convention of existing IE value subregistries 
+IANA is requested to create a new subregistry titled "flowDiscardClass (Value TBD)" under the IPFIX Information Elements registry, where TBD is the ElementId assigned in {{iana}}, following the naming convention of existing IE value subregistries.
 
 * Registration Procedure: Expert Review {{!RFC8126}}
 * Reference: This document; {{!RFC7013}}
