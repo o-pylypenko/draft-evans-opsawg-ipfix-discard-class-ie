@@ -48,17 +48,8 @@ author:
     email: kcheaito@amazon.com
 
 normative:
-  I-D.ietf-opsawg-discardmodel:
-  RFC2119:
-  RFC5103:
-  RFC7011:
-  RFC7012:
-  RFC7013:
-  RFC8126:
-  RFC8174:
 
 informative:
-  RFC7270:
   IANA-IPFIX:
     title: IP Flow Information Export (IPFIX) Entities
     author:
