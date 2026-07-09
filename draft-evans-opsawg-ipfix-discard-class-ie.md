@@ -27,13 +27,14 @@ author:
  -
     ins: O. Pylypenko
     name: Oleksandr Pylypenko
-    org: Amazon
-    street: 410 Terry Ave N
-    city: Seattle
-    region: WA
-    code: 98109
+    role: editor
+    org: Nvidia
+    street: 2788 San Tomas Expy
+    city: Santa Clara
+    region: CA
+    code: 95051
     country: US
-    email: opyl@amazon.com
+    email: opylypenko@nvidia.com
 
  -
     ins: K. Cheaito
