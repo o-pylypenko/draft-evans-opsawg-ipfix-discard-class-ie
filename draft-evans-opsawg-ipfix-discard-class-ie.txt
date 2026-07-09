@@ -238,8 +238,9 @@ Table of Contents
 
    Units: none
 
-   Range: 0..38 (values from Table 1; other values are unassigned and
-   MUST be treated as unknown)
+   Range: 0..255.  Assigned values are maintained in the IANA
+   'flowDiscardClass Values' subregistry Section 5.2; unassigned values
+   MUST be treated as unknown Section 3.4.1
 
    Reversibility: reversible (value does not change under flow reversal
    as per [RFC5103])
@@ -454,7 +455,7 @@ Table of Contents
    2.  flowDiscardClass alone MUST be sufficient to recover the discard
        classification.
 
-   3.  Exporters MAY continue to export forwardingStatus ([RFC7270]) in
+   3.  Exporters MAY continue to export forwardingStatus [RFC7270] in
        parallel.  When both are present, flowDiscardClass MUST be
        considered authoritative for discard classification.
 
@@ -492,10 +493,6 @@ Table of Contents
 
    *  Units: none
 
-   *  Range: 0..38 (values are listed in the “flowDiscardClass Values”
-      subregistry created below; other values are unassigned and MUST be
-      treated as unknown)
-
    *  Range: 0..255.  Assigned values are maintained in the IANA
       'flowDiscardClass Values' subregistry Section 5.2; unassigned
       values MUST be treated as unknown Section 3.4.1
@@ -514,7 +511,7 @@ Table of Contents
    registry.  This subregistry contains the enumerated values for the
    flowDiscardClass IE.
 
-   *  Registration Procedure: Expert Review ([RFC8126])
+   *  Registration Procedure: Expert Review [RFC8126]
 
    *  Reference: This document; [RFC7013]
 
@@ -584,6 +581,10 @@ Table of Contents
               May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
 
 6.2.  Informative References
+
+   [IANA-IPFIX]
+              IANA, "IP Flow Information Export (IPFIX) Entities", n.d.,
+              <https://www.iana.org/assignments/ipfix/>.
 
    [RFC7270]  Yourtchenko, A., Aitken, P., and B. Claise, "Cisco-
               Specific Information Elements Reused in IP Flow

@@ -1327,7 +1327,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-3.2-3">Abstract Data Type: unsigned8<a href="#section-3.2-3" class="pilcrow">¶</a></p>
 <p id="section-3.2-4">Data Type Semantics: identifier<a href="#section-3.2-4" class="pilcrow">¶</a></p>
 <p id="section-3.2-5">Units: none<a href="#section-3.2-5" class="pilcrow">¶</a></p>
-<p id="section-3.2-6">Range: 0..38 (values from <a href="#flowDiscardClass-table" class="auto internal xref">Table 1</a>; other values are unassigned and <span class="bcp14">MUST</span> be treated as unknown)<a href="#section-3.2-6" class="pilcrow">¶</a></p>
+<p id="section-3.2-6">Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry <a href="#subregistry" class="auto internal xref">Section 5.2</a>; unassigned values <span class="bcp14">MUST</span> be treated as unknown <a href="#impl-semantics" class="auto internal xref">Section 3.4.1</a><a href="#section-3.2-6" class="pilcrow">¶</a></p>
 <p id="section-3.2-7">Reversibility: reversible (value does not change under flow reversal as per <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>)<a href="#section-3.2-7" class="pilcrow">¶</a></p>
 <p id="section-3.2-8">Status: current<a href="#section-3.2-8" class="pilcrow">¶</a></p>
 <p id="section-3.2-9">ElementId: TBD<a href="#section-3.2-9" class="pilcrow">¶</a></p>
@@ -1532,7 +1532,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-3.4.2-1.5.1">Traffic class context. For discard classes where per-class correlation is operationally significant (e.g., no-buffer, policy/l3/policer), exporters <span class="bcp14">SHOULD</span> include a traffic-class IE in the same record (e.g., ipDiffServCodePoint or ipClassOfService for L3, dot1qPriority for L2). If classification occurs after remarking, exporters <span class="bcp14">SHOULD</span> use the post-remark class, or provide a device queue-ID→class mapping via IPFIX Options data.<a href="#section-3.4.2-1.5.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-3.4.2-1.6">
-              <p id="section-3.4.2-1.6.1">Context. The flow structure in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> is keyed by direction; to preserve this, exporters <span class="bcp14">MUST</span> include flowDirection [IANA-IPFIX] or otherwise make the direction of the classified discards unambiguous (e.g., by exporting per-direction Flow Records). To aid correlation with interface/device/control-plane counters, exporters <span class="bcp14">SHOULD</span> additionally include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.<a href="#section-3.4.2-1.6.1" class="pilcrow">¶</a></p>
+              <p id="section-3.4.2-1.6.1">Context. The flow structure in <span>[<a href="#I-D.ietf-opsawg-discardmodel" class="cite xref">I-D.ietf-opsawg-discardmodel</a>]</span> is keyed by direction; to preserve this, exporters <span class="bcp14">MUST</span> include flowDirection <span>[<a href="#IANA-IPFIX" class="cite xref">IANA-IPFIX</a>]</span> or otherwise make the direction of the classified discards unambiguous (e.g., by exporting per-direction Flow Records). To aid correlation with interface/device/control-plane counters, exporters <span class="bcp14">SHOULD</span> additionally include time bounds (flowStart/flowEnd or an observation-time IE), ingressInterface/egressInterface as applicable, and observationPointId when multiple pipeline stages/taps exist.<a href="#section-3.4.2-1.6.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 </section>
@@ -1574,7 +1574,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-3.4.4-1.2.1">flowDiscardClass alone <span class="bcp14">MUST</span> be sufficient to recover the discard classification.<a href="#section-3.4.4-1.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-3.4.4-1.3">
-              <p id="section-3.4.4-1.3.1">Exporters <span class="bcp14">MAY</span> continue to export forwardingStatus (<span>[<a href="#RFC7270" class="cite xref">RFC7270</a>]</span>) in parallel. When both are present, flowDiscardClass <span class="bcp14">MUST</span> be considered authoritative for discard classification.<a href="#section-3.4.4-1.3.1" class="pilcrow">¶</a></p>
+              <p id="section-3.4.4-1.3.1">Exporters <span class="bcp14">MAY</span> continue to export forwardingStatus <span>[<a href="#RFC7270" class="cite xref">RFC7270</a>]</span> in parallel. When both are present, flowDiscardClass <span class="bcp14">MUST</span> be considered authoritative for discard classification.<a href="#section-3.4.4-1.3.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-3.4.4-1.4">
               <p id="section-3.4.4-1.4.1">When flow sampling is active, the presence of flowDiscardClass indicates at least one sampled packet matched that class.<a href="#section-3.4.4-1.4.1" class="pilcrow">¶</a></p>
@@ -1626,19 +1626,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-5.1-2.6.1">Units: none<a href="#section-5.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.7">
-            <p id="section-5.1-2.7.1">Range: 0..38 (values are listed in the “flowDiscardClass Values” subregistry created below; other values are unassigned and <span class="bcp14">MUST</span> be treated as unknown)<a href="#section-5.1-2.7.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.7.1">Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry <a href="#subregistry" class="auto internal xref">Section 5.2</a>; unassigned values <span class="bcp14">MUST</span> be treated as unknown <a href="#impl-semantics" class="auto internal xref">Section 3.4.1</a><a href="#section-5.1-2.7.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.8">
-            <p id="section-5.1-2.8.1">Range: 0..255. Assigned values are maintained in the IANA 'flowDiscardClass Values' subregistry <a href="#subregistry" class="auto internal xref">Section 5.2</a>; unassigned values <span class="bcp14">MUST</span> be treated as unknown <a href="#impl-semantics" class="auto internal xref">Section 3.4.1</a><a href="#section-5.1-2.8.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.8.1">Reversibility: reversible (value does not change under flow reversal as per <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>)<a href="#section-5.1-2.8.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.9">
-            <p id="section-5.1-2.9.1">Reversibility: reversible (value does not change under flow reversal as per <span>[<a href="#RFC5103" class="cite xref">RFC5103</a>]</span>)<a href="#section-5.1-2.9.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.9.1">Status: current<a href="#section-5.1-2.9.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-2.10">
-            <p id="section-5.1-2.10.1">Status: current<a href="#section-5.1-2.10.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.1-2.11">
-            <p id="section-5.1-2.11.1">Reference: This document; <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span><a href="#section-5.1-2.11.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.10.1">Reference: This document; <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span><a href="#section-5.1-2.10.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1652,7 +1649,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 enumerated values for the flowDiscardClass IE.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.2-2.1">
-            <p id="section-5.2-2.1.1">Registration Procedure: Expert Review (<span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>)<a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.2-2.1.1">Registration Procedure: Expert Review <span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span><a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.2-2.2">
             <p id="section-5.2-2.2.1">Reference: This document; <span>[<a href="#RFC7013" class="cite xref">RFC7013</a>]</span><a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
@@ -1732,6 +1729,10 @@ enumerated values for the flowDiscardClass IE.<a href="#section-5.2-1" class="pi
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
+<dt id="IANA-IPFIX">[IANA-IPFIX]</dt>
+        <dd>
+<span class="refAuthor">IANA</span>, <span class="refTitle">"IP Flow Information Export (IPFIX) Entities"</span>, <span>n.d.</span>, <span>&lt;<a href="https://www.iana.org/assignments/ipfix/">https://www.iana.org/assignments/ipfix/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC7270">[RFC7270]</dt>
       <dd>
 <span class="refAuthor">Yourtchenko, A.</span>, <span class="refAuthor">Aitken, P.</span>, and <span class="refAuthor">B. Claise</span>, <span class="refTitle">"Cisco-Specific Information Elements Reused in IP Flow Information Export (IPFIX)"</span>, <span class="seriesInfo">RFC 7270</span>, <span class="seriesInfo">DOI 10.17487/RFC7270</span>, <time datetime="2014-06" class="refDate">June 2014</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7270">https://www.rfc-editor.org/rfc/rfc7270</a>&gt;</span>. </dd>
