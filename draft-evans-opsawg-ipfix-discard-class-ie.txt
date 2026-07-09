@@ -3,9 +3,11 @@
 
 
 OPSAWG                                                          J. Evans
-Internet-Draft                                              O. Pylypenko
-Intended status: Informational                                K. Cheaito
-Expires: 22 March 2026                                            Amazon
+Internet-Draft                                                    Amazon
+Intended status: Informational                         O. Pylypenko, Ed.
+Expires: 22 March 2026                                            Nvidia
+                                                              K. Cheaito
+                                                                  Amazon
                                                        18 September 2025
 
 
@@ -528,9 +530,9 @@ Table of Contents
               Evans, J., Pylypenko, O., Haas, J., Kadosh, A., and M.
               Boucadair, "Information and Data Models for Packet Discard
               Reporting", Work in Progress, Internet-Draft, draft-ietf-
-              opsawg-discardmodel-10, 26 November 2025,
+              opsawg-discardmodel-14, 24 June 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-opsawg-
-              discardmodel-10>.
+              discardmodel-14>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -773,12 +775,12 @@ Authors' Addresses
    Email: jevanamz@amazon.co.uk
 
 
-   Oleksandr Pylypenko
-   Amazon
-   410 Terry Ave N
-   Seattle, WA 98109
+   Oleksandr Pylypenko (editor)
+   Nvidia
+   2788 San Tomas Expy
+   Santa Clara, CA 95051
    United States of America
-   Email: opyl@amazon.com
+   Email: opylypenko@nvidia.com
 
 
    Karim Cheaito
