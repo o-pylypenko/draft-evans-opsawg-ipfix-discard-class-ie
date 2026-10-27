@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-25T03:49:49.856100+00:00",
+  "timestamp": "2026-10-27T04:15:27.554068+00:00",
   "repo": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
   "labels": [
     {
@@ -826,24 +826,26 @@
       "id": "PR_kwDOPU0KGc8AAAABI3Bozg",
       "title": "Update draft-evans-opsawg-ipfix-discard-class-ie.md",
       "url": "https://github.com/o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie/pull/29",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "johnevansuk",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
       "body": "Simplification and major revision in line with https://datatracker.ietf.org/doc/draft-ietf-opsawg-discardmodel/16/",
       "createdAt": "2026-10-16T14:06:39Z",
-      "updatedAt": "2026-10-16T14:06:40Z",
+      "updatedAt": "2026-10-26T06:43:12Z",
       "baseRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
       "baseRefName": "main",
       "baseRefOid": "debc3bce70c7f34551161cd697988c51078b6cac",
       "headRepository": "o-pylypenko/draft-evans-opsawg-ipfix-discard-class-ie",
       "headRefName": "johnevansuk-patch-29",
       "headRefOid": "496e914eed8a9c63265709005842f38af3ecfa04",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2026-10-26T06:43:12Z",
+      "mergedAt": "2026-10-26T06:43:12Z",
+      "mergedBy": "o-pylypenko",
+      "mergeCommit": {
+        "oid": "33fca41a85e763115b3d90b4b043cc0805efd4d5"
+      },
       "comments": [],
       "reviews": []
     }
